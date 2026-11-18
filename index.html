@@ -1,0 +1,2104 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Last Floor">
+<meta name="theme-color" content="#000000">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<title>THE LAST FLOOR</title>
+<style>
+:root{--ink:#0a0a0a;--paper:#ece8df;--red:#c0141e;--dim:#8d8a84}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:manipulation;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;color:var(--paper);
+  font-family:"Sarabun","Noto Sans Thai","Leelawadee UI","Thonburi","Tahoma",sans-serif;user-select:none;-webkit-user-select:none}
+#stage{position:absolute;left:50%;top:50%;width:1672px;height:941px;overflow:hidden;background:#000;transform-origin:center center}
+img{-webkit-user-drag:none;user-drag:none}
+.screen{position:absolute;inset:0;display:none}
+.screen.on{display:block}
+.btnimg{cursor:pointer;transition:filter .15s,transform .15s}
+.btnimg:hover{filter:brightness(1.25) drop-shadow(0 0 10px rgba(200,20,30,.8));transform:scale(1.04)}
+.btnimg.disabled{filter:grayscale(1) brightness(.45);pointer-events:none}
+.ink{font-weight:800;letter-spacing:.5px;text-shadow:0 0 2px #000,2px 2px 0 #000}
+.paper{background:#ece8df;color:#111}
+.hidden{display:none!important}
+
+/* ---------- loading ---------- */
+#loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;z-index:999;font-size:28px}
+#loadbar{width:520px;height:14px;border:2px solid #ddd;margin-top:18px}
+#loadbar i{display:block;height:100%;width:0;background:var(--red)}
+
+/* ---------- menu ---------- */
+#menu .bg{position:absolute;inset:0;width:100%;height:100%}
+.hot{position:absolute;left:527px;width:405px;cursor:pointer;border-radius:6px}
+.hot:hover{box-shadow:0 0 0 3px rgba(255,255,255,.85),0 0 30px 6px rgba(200,20,30,.9);background:rgba(255,255,255,.06)}
+.hot.disabled{background:rgba(0,0,0,.62);cursor:not-allowed;box-shadow:none}
+.hot.disabled:after{content:"NO SAVE DATA";position:absolute;left:100%;margin-left:14px;white-space:nowrap;top:50%;transform:translateY(-50%);font-size:15px;color:#bbb;letter-spacing:2px}
+#menu .ver{position:absolute;right:14px;bottom:10px;font-size:14px;color:#888}
+#fog{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 30% 100%,rgba(255,255,255,.12),transparent 55%);animation:fog 9s ease-in-out infinite alternate}
+@keyframes fog{from{opacity:.3;transform:translateX(-20px)}to{opacity:.9;transform:translateX(20px)}}
+
+/* ---------- generic panels ---------- */
+.dark-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.28) contrast(1.2)}
+.title{position:absolute;left:0;right:0;top:26px;text-align:center;font-size:48px}
+.title small{display:block;font-size:20px;color:var(--dim);font-weight:400;margin-top:2px;letter-spacing:4px}
+.frame{border:3px solid #111;outline:2px solid #d9d4c9;outline-offset:-8px;background:linear-gradient(#1a1a1a,#0c0c0c);box-shadow:0 0 0 2px #000,0 10px 30px rgba(0,0,0,.8)}
+.tbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:150px;height:54px;padding:0 22px;font-size:22px;font-weight:800;color:#eee;background:#111;border:2px solid #ddd;outline:2px solid #000;cursor:pointer;font-family:inherit;letter-spacing:1px}
+.tbtn:hover{background:#2a0508;border-color:#ff4a4a;box-shadow:0 0 18px rgba(200,20,30,.8)}
+.tbtn.red{background:#5c070c}
+.tbtn[disabled]{opacity:.35;pointer-events:none}
+
+/* ---------- slots ---------- */
+#slotlist{position:absolute;left:150px;right:150px;top:150px;display:flex;flex-direction:column;gap:22px}
+.slot{height:190px;display:flex;align-items:center;gap:26px;padding:0 30px;cursor:pointer;position:relative}
+.slot:hover{outline-color:#ff5050}
+.slot .pic{width:150px;height:150px;border:2px solid #ddd;background:#ece8df;overflow:hidden;flex:none}
+.slot .pic img{width:100%;height:100%;object-fit:cover;object-position:top}
+.slot .info{flex:1;font-size:22px;line-height:1.55}
+.slot .info b{font-size:30px}
+.slot .acts{display:flex;flex-direction:column;gap:10px}
+.slot .num{position:absolute;left:-60px;top:50%;transform:translateY(-50%);font-size:46px;font-weight:900;color:#555}
+
+/* ---------- character select ---------- */
+#cgrid{position:absolute;left:46px;top:120px;width:690px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.ccard{height:330px;position:relative;cursor:pointer;overflow:hidden;background:#e9e5dc;border:3px solid #111;outline:2px solid #ccc}
+.ccard img{position:absolute;left:50%;top:10px;height:520px;transform:translateX(-50%);filter:contrast(1.05)}
+.ccard .nm{position:absolute;left:0;right:0;bottom:0;background:#0d0d0d;color:#eee;text-align:center;font-weight:900;font-size:24px;padding:4px 0;letter-spacing:3px}
+.ccard .nm span{font-size:14px;color:#aaa;font-weight:400;letter-spacing:0;margin-left:6px}
+.ccard:hover{outline-color:#ff5050}
+.ccard.sel{outline:4px solid var(--red);box-shadow:0 0 30px rgba(200,20,30,.9)}
+.ccard.sel .nm{background:var(--red)}
+#cdetail{position:absolute;left:770px;top:120px;width:860px;height:690px;padding:26px}
+#cportrait{position:absolute;left:26px;top:26px;width:330px;height:400px;background:#ece8df;border:3px solid #111;outline:2px solid #ccc;overflow:hidden}
+#cportrait img{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:120%}
+#ctext{position:absolute;left:385px;top:22px;right:26px}
+#cname{font-size:54px;font-weight:900;letter-spacing:6px;line-height:1}
+#cgender{font-size:20px;color:var(--dim);margin:4px 0 12px}
+#cbio{font-size:19px;line-height:1.6;color:#ddd}
+#cskill{margin-top:16px;padding:12px 16px;border-left:5px solid var(--red);background:rgba(255,255,255,.05)}
+#cskill b{font-size:24px;color:#ff6a6a}
+#cskill p{margin:6px 0 0;font-size:18px;line-height:1.55}
+#cstats{position:absolute;left:26px;top:450px;width:330px;font-size:18px}
+.stat{display:flex;align-items:center;gap:10px;margin:7px 0}
+.stat span{width:92px}
+.stat i{display:flex;gap:4px}
+.stat i u{width:36px;height:14px;border:2px solid #ccc;background:transparent}
+.stat i u.f{background:#ddd}
+#cbtns{position:absolute;right:26px;bottom:26px;display:flex;gap:18px}
+#cbtns img{height:70px}
+#cplay{position:absolute;left:385px;right:26px;top:470px;font-size:17px;color:#bbb;line-height:1.5}
+
+/* ---------- cutscene ---------- */
+#cut{background:#000}
+#cut .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:filter 1.2s}
+#cutactors img{position:absolute;transition:opacity 1.4s,filter 1.4s}
+#cutbox{position:absolute;left:60px;right:60px;bottom:24px;height:250px}
+#cutbox .bgi{position:absolute;inset:0;width:100%;height:100%}
+#cutname{position:absolute;left:84px;top:26px;font-size:24px;font-weight:900;color:#111;letter-spacing:3px}
+#cuttext{position:absolute;left:84px;right:150px;top:62px;font-size:25px;line-height:1.6;color:#111;white-space:pre-line;font-weight:600}
+#cutnext{position:absolute;right:46px;bottom:30px;color:#111;font-size:18px;font-weight:800;animation:blink 1s infinite}
+#cutskip{position:absolute;right:24px;top:20px;height:62px}
+#note,.lorenote{position:absolute;left:50%;top:40px;transform:translateX(-50%) rotate(-1.5deg);width:620px;padding:30px 40px;background:#e8e2d3;color:#111;font-size:23px;line-height:1.65;white-space:pre-line;box-shadow:0 20px 60px #000;border:2px solid #333;font-weight:600;display:none}
+#note h3{margin:0 0 10px;text-align:center;font-size:26px;letter-spacing:2px;border-bottom:2px solid #111;padding-bottom:8px}
+@keyframes blink{50%{opacity:.2}}
+
+/* ---------- game world ---------- */
+#game{background:#000}
+#shake{position:absolute;inset:0}
+#world{position:absolute;left:0;top:-60px;width:1672px;height:941px}
+#world .bg{position:absolute;left:0;top:0;width:1672px;height:941px}
+.obj{position:absolute;pointer-events:auto;cursor:help;transform-origin:50% 100%}
+.obj.ceil{transform-origin:50% 0}
+.obj.mid,.obj.fx{transform-origin:50% 50%}
+.plate{position:absolute;width:78px;height:28px;margin-left:-39px;background:#1a1a1a;border:2px solid #cfcac0;color:#e6e1d6;font:800 17px/24px "Courier New",monospace;text-align:center;letter-spacing:2px;box-shadow:0 3px 6px rgba(0,0,0,.6)}
+.ssign{position:absolute;padding:4px 12px;background:#0d0d0d;border:2px solid #ddd;color:#eee;font:900 22px/28px sans-serif;letter-spacing:2px}
+#player{position:absolute;pointer-events:none;transform-origin:50% 100%;filter:drop-shadow(0 0 6px rgba(0,0,0,.9))}
+#pshadow{position:absolute;height:22px;border-radius:50%;background:radial-gradient(rgba(0,0,0,.55),transparent 70%);pointer-events:none}
+.prompt{position:absolute;height:72px;cursor:pointer;animation:bob 1.2s ease-in-out infinite;z-index:40}
+@keyframes bob{50%{transform:translateY(-8px)}}
+#fxdark{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none}
+#vignette{position:absolute;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 38%,rgba(0,0,0,.55) 62%,#000 100%)}
+#redpulse{position:absolute;inset:0;pointer-events:none;opacity:0;box-shadow:inset 0 0 160px 40px rgba(160,0,10,.9)}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+#grain{position:absolute;inset:-50%;pointer-events:none;opacity:.08;background-image:repeating-radial-gradient(circle at 17% 32%,#fff 0 1px,transparent 1px 3px);animation:grain .4s steps(3) infinite}
+@keyframes grain{0%{transform:translate(0,0)}33%{transform:translate(-3%,2%)}66%{transform:translate(2%,-3%)}}
+.shk1{animation:shk .5s infinite}.shk2{animation:shk .28s infinite}.shk3{animation:shk2 .16s infinite}
+@keyframes shk{0%,100%{transform:translate(0,0)}25%{transform:translate(1.5px,-1px)}75%{transform:translate(-1.5px,1px)}}
+@keyframes shk2{0%,100%{transform:translate(0,0) rotate(0)}25%{transform:translate(4px,-3px) rotate(.2deg)}75%{transform:translate(-4px,3px) rotate(-.2deg)}}
+#jump{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#000;z-index:80}
+#jumpface{position:absolute;inset:-4%;background-size:auto 118%;background-color:#000;background-repeat:no-repeat;filter:contrast(1.7) brightness(1.15);animation:jin .85s linear forwards}
+#jumpred{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 30%,rgba(150,0,0,.75));mix-blend-mode:multiply;animation:jred .85s steps(6) forwards}
+@keyframes jin{0%{transform:scale(2.2);filter:contrast(2) brightness(2.2)}4%{transform:scale(1.12)}8%{transform:scale(1.2) translate(-1.5%,1%);filter:invert(1) contrast(2)}12%{transform:scale(1.15) translate(1%,-1%);filter:contrast(1.6)}20%{transform:scale(1.2) translate(-.6%,.5%)}35%{transform:scale(1.26) translate(.8%,0);filter:contrast(1.7) brightness(.9)}60%{transform:scale(1.32)}61%{filter:invert(1)}64%{filter:contrast(1.6)}100%{transform:scale(1.4)}}
+@keyframes jred{0%,30%{opacity:1}31%,45%{opacity:.2}46%,100%{opacity:.9}}
+#titlecard{position:absolute;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;z-index:70;transition:opacity .35s}
+#titlecard b{font-size:110px;font-weight:900;letter-spacing:10px}
+#titlecard span{font-size:24px;color:#999;letter-spacing:6px}
+
+/* ---------- HUD ---------- */
+#hud{position:absolute;left:0;right:0;bottom:6px;height:240px;z-index:50}
+#hud img.panel{position:absolute;top:0;height:240px}
+#hface{left:14px;width:235px}
+#htext{left:257px;width:938px}
+#hstat{right:14px;width:460px}
+#hportrait{position:absolute;left:32px;top:20px;width:199px;height:199px;overflow:hidden;background:#e7e2d8}
+#hportrait img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%}
+#hportrait.critical{animation:shk .2s infinite}
+#hspeaker{position:absolute;left:312px;top:28px;font-size:21px;font-weight:900;color:#111;letter-spacing:2px}
+#hmsg{position:absolute;left:312px;top:58px;width:740px;height:160px;font-size:23px;line-height:1.55;color:#111;font-weight:600;white-space:pre-line;overflow:hidden}
+#hmore{position:absolute;left:1120px;top:190px;color:#111;font-weight:900;animation:blink 1s infinite;display:none;font-size:20px}
+#hfloor{position:absolute;right:120px;top:26px;width:300px;height:56px;display:flex;align-items:center;justify-content:center;gap:14px;background:#111;border:2px solid #777;font-size:36px;font-weight:900;letter-spacing:2px}
+#hfloor img{height:40px}
+#hgear{position:absolute;right:30px;top:24px;width:70px;height:62px;cursor:pointer;border-radius:6px}
+#hgear:hover{box-shadow:0 0 16px rgba(220,30,30,.9)}
+#hheart{position:absolute;right:342px;top:104px;height:104px}
+#hheart.beat{animation:hb .5s}
+@keyframes hb{30%{transform:scale(1.12)}}
+#hecg{position:absolute;right:30px;top:100px;width:300px;height:50px}
+#hbar{position:absolute;right:30px;top:154px;width:300px;height:30px;display:flex;gap:3px;padding:3px;border:2px solid #aaa;background:#0b0b0b}
+#hbar u{flex:1;background:#2a2a2a}
+#hbar u.f{background:#ddd}
+#hbar.hhot u.f{background:#d42530}
+#hlevel{position:absolute;right:30px;top:190px;width:300px;text-align:center;font-size:18px;font-weight:900;letter-spacing:3px}
+#skillbtn{position:absolute;left:14px;top:-58px;height:50px;padding:0 16px;display:flex;align-items:center;gap:10px;background:#0d0d0d;border:2px solid #ddd;outline:2px solid #000;font-size:18px;font-weight:800;cursor:pointer}
+#skillbtn.passive{cursor:default;opacity:.85}
+#skillbtn.cool{opacity:.5}
+#skillbtn:not(.passive):not(.cool):hover{border-color:#ff4a4a;box-shadow:0 0 16px rgba(220,30,30,.8)}
+#skillbtn small{color:#aaa;font-weight:400}
+#savedicon{position:absolute;right:24px;top:-110px;height:40px;opacity:0;transition:opacity .4s}
+#toast{position:absolute;left:50%;top:130px;transform:translateX(-50%);padding:14px 40px;background:rgba(10,10,10,.92);border:2px solid #ddd;outline:3px solid #000;font-size:30px;font-weight:900;letter-spacing:4px;opacity:0;transition:opacity .4s;z-index:60;white-space:nowrap;pointer-events:none;text-align:center}
+#toast.red{border-color:#ff3b3b;color:#ff6262}
+#toast small{display:block;font-size:19px;letter-spacing:1px;color:#ccc;font-weight:600}
+#mobilepad{position:absolute;left:20px;bottom:330px;display:flex;gap:10px;z-index:45}
+#mobilepad div{width:96px;height:96px;border-radius:10px;border:2px solid #ddd;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer}
+
+/* ---------- death / ending ---------- */
+#death{background:radial-gradient(ellipse at 30% 50%,#2a0004,#000 70%)}
+#death .dp{position:absolute;left:70px;top:70px;height:800px;filter:drop-shadow(0 0 30px rgba(180,0,0,.6));animation:dpin 1.2s ease-out}
+@keyframes dpin{0%{transform:scale(1.4);filter:brightness(3) contrast(2)}8%{transform:scale(1.05)}12%{filter:invert(1)}16%{filter:drop-shadow(0 0 30px rgba(180,0,0,.6))}100%{transform:scale(1)}}
+#death .info{position:absolute;left:840px;top:150px;width:760px}
+#death h1{font-size:96px;margin:0;color:#e01d28;letter-spacing:8px;line-height:1}
+#death .sub{font-size:24px;color:#aaa;margin:6px 0 30px;letter-spacing:4px}
+#death .row{font-size:26px;line-height:1.7}
+#death .cause{margin:24px 0 40px;padding:18px 22px;border-left:5px solid #e01d28;background:rgba(255,255,255,.05);font-size:23px;line-height:1.6}
+#ending{background:#000}
+#ending .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 30%;transition:opacity 2s,filter 2s}
+#ending .bg.kb{animation:kb 30s linear forwards}
+@keyframes kb{from{transform:scale(1.12) translateY(3%)}to{transform:scale(1)}}
+#endflash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity 1.6s}
+#endpanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:680px;padding:28px 34px;opacity:0;pointer-events:none;transition:opacity 1.5s;z-index:5}
+#endpanel.on{opacity:1;pointer-events:auto}
+#endpanel h1{margin:0 0 6px;font-size:52px;letter-spacing:4px}
+#endpanel .row{display:flex;justify-content:space-between;font-size:23px;padding:6px 0;border-bottom:1px solid #333}
+#endstory{position:absolute;left:0;right:0;bottom:0;min-height:170px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:29px;font-weight:700;color:#f2eee6;background:linear-gradient(transparent,rgba(0,0,0,.88) 35%);padding:40px 140px 30px;line-height:1.6;white-space:pre-line;transition:opacity .5s;z-index:4}
+#endskip{position:absolute;right:24px;top:20px;z-index:6}
+
+/* ---------- modals ---------- */
+#modal{position:absolute;inset:0;background:rgba(0,0,0,.72);z-index:200;display:none;align-items:center;justify-content:center}
+#modal.on{display:flex}
+#mbox{min-width:620px;max-width:1300px;padding:34px 40px;position:relative}
+#mbox h2{margin:0 0 18px;font-size:34px;letter-spacing:3px}
+#mbody{font-size:22px;line-height:1.6}
+#mbtns{display:flex;gap:18px;justify-content:center;margin-top:28px}
+#mbtns img{height:66px}
+.tabs{display:flex;gap:6px;margin-bottom:18px}
+.tab{padding:8px 18px;border:2px solid #666;cursor:pointer;font-weight:800;font-size:19px}
+.tab.on{border-color:#eee;background:#5c070c}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:30px;padding:9px 0;border-bottom:1px solid #2c2c2c;font-size:21px;min-width:760px}
+.opt img.tg{height:44px;cursor:pointer}
+.opt input[type=range]{width:300px;accent-color:#c0141e}
+.opt select{font:inherit;font-size:19px;background:#111;color:#eee;border:2px solid #aaa;padding:4px 10px}
+.keys{display:grid;grid-template-columns:auto auto;gap:6px 40px;font-size:21px}
+.keys b{display:inline-block;min-width:44px;padding:2px 10px;border:2px solid #ddd;text-align:center;margin-right:6px;background:#111}
+#memview{position:relative;width:1170px;height:520px;overflow:hidden;border:3px solid #ddd;background:#000}
+#memview .mw{position:absolute;left:0;top:-60px;width:1672px;height:941px;transform:scale(.7);transform-origin:0 0;filter:sepia(.6) contrast(1.1)}
+
+#itembar{position:absolute;left:14px;top:12px;display:flex;gap:10px;z-index:46}
+#talbtn,.ibox{display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(8,8,8,.85);border:2px solid #ddd;outline:2px solid #000;cursor:pointer;font-weight:900;font-size:20px}
+#talbtn small,.ibox small{font-size:14px;color:#bbb;font-weight:600}
+#talbtn:hover,.ibox:hover{border-color:#ff4a4a;box-shadow:0 0 16px rgba(220,30,30,.8)}
+#talbtn.on{border-color:#ffcc33;box-shadow:0 0 22px rgba(255,200,40,.9);background:#3a2600}
+#talicons{display:flex;gap:2px}#talicons img{height:44px;filter:drop-shadow(0 0 4px rgba(255,200,60,.6))}#talicons img.used{opacity:.18;filter:grayscale(1)}
+.ibox img{height:40px}
+#world.aiming,#world.aiming .obj,#world.aiming .plate,#world.aiming .ssign,#world.aiming .emptyspot{cursor:crosshair}
+#world.aiming .obj:hover,#world.aiming .plate:hover,#world.aiming .ssign:hover{filter:drop-shadow(0 0 10px #ffcc33) drop-shadow(0 0 3px #ffcc33)!important}
+#world.aiming .emptyspot:hover{box-shadow:0 0 0 2px rgba(255,204,51,.6) inset}
+.emptyspot{position:absolute;z-index:4}
+.ghostfx{-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent);animation:gfloat 3.2s ease-in-out infinite}
+@keyframes gfloat{50%{translate:0 -8px}}
+.hunter{filter:contrast(1.3) drop-shadow(0 0 18px rgba(0,0,0,.9))}
+.sticker{position:absolute;height:104px;z-index:20;pointer-events:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.7));animation:stick .25s ease-out}
+.sticker.burn{animation:burn 1.6s forwards}
+@keyframes stick{from{transform:scale(1.8);opacity:0}}
+@keyframes burn{0%{filter:none}25%{filter:sepia(1) saturate(8) hue-rotate(-30deg) brightness(1.6)}60%{filter:brightness(.15);opacity:1}100%{filter:brightness(0);opacity:0;translate:0 30px}}
+.sealghost{position:absolute;height:300px;z-index:30;pointer-events:none;animation:sealg 1.5s ease-in forwards}
+@keyframes sealg{0%{opacity:0;transform:translateY(60px) scale(.6);filter:brightness(2)}25%{opacity:1;transform:translateY(0) scale(1.05);filter:brightness(1.2) drop-shadow(0 0 30px #ffd34a)}55%{transform:translateY(-10px) scale(1) rotate(-3deg)}100%{opacity:0;transform:translateY(260px) scale(.05) rotate(25deg);filter:brightness(3) drop-shadow(0 0 40px #ffd34a)}}
+.picklabel{position:absolute;transform:translateX(-50%);z-index:23;padding:2px 10px;background:rgba(0,0,0,.8);border:1px solid #ffcc33;color:#ffd75a;font-size:16px;font-weight:800;white-space:nowrap;cursor:pointer;animation:bob 1.4s ease-in-out infinite}
+.pickup.dropping{animation:dropin 1.1s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes dropin{0%{transform:translateY(var(--fy)) scale(.3);opacity:0;filter:brightness(3) drop-shadow(0 0 30px #ffd34a)}40%{transform:translateY(var(--fy)) scale(1.3);opacity:1}100%{transform:none}}
+.pickup{position:absolute;height:92px;z-index:22;cursor:pointer;filter:drop-shadow(0 0 10px #ffcc33) drop-shadow(0 0 20px rgba(255,190,40,.7)) brightness(1.15);animation:bob 1.4s ease-in-out infinite}
+#dghost{position:absolute;right:-40px;bottom:-40px;height:820px;opacity:.22;filter:contrast(1.4) brightness(.8);pointer-events:none;-webkit-mask-image:linear-gradient(#000 60%,transparent);mask-image:linear-gradient(#000 60%,transparent)}
+.hot2{position:absolute;left:470px;width:400px;top:880px;height:50px;display:flex;align-items:center;justify-content:center;gap:10px;background:#120304;border:2px solid #b3121b;outline:2px solid #000;font-weight:900;font-size:19px;cursor:pointer;letter-spacing:1px}
+.hot2 img{height:40px}.hot2 b{color:#ff6a6a}
+.hot2:hover{box-shadow:0 0 30px 6px rgba(200,20,30,.9);background:#2a0508}
+#agrid{position:absolute;left:40px;top:120px;width:1000px;height:790px;overflow-y:auto;display:grid;grid-template-columns:repeat(8,1fr);gap:8px;padding-right:8px;align-content:start}
+.acell{height:132px;background:#0e0e0e;border:2px solid #444;position:relative;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+.acell img{max-width:92%;max-height:118px}
+.acell span{position:absolute;left:4px;top:2px;font-size:13px;color:#999;font-weight:800}
+.acell.locked img{filter:brightness(0);opacity:.55}
+.acell:hover{border-color:#ff5050}.acell.sel{border-color:#ffcc33;box-shadow:0 0 14px rgba(255,200,40,.7)}
+#adetail{position:absolute;left:1070px;top:120px;width:560px;height:790px;padding:22px 28px}
+.abig{height:360px;display:flex;align-items:flex-end;justify-content:center;background:radial-gradient(#2a0d0d,#070707 70%);border:2px solid #333}
+.abig img{max-height:340px;max-width:95%;filter:contrast(1.15)}.abig.locked img{filter:brightness(0);opacity:.6}
+.ano{margin-top:16px;color:#aaa;font-size:17px;letter-spacing:2px}.aname{font-size:40px;font-weight:900;margin:2px 0 4px}
+.atier{color:#ff5a5a;font-size:20px;letter-spacing:2px}.adesc{margin-top:14px;font-size:21px;line-height:1.6;color:#ddd}.ameta{margin-top:16px;font-size:16px;color:#999;line-height:1.6}
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <div id="loading"><div class="ink">THE LAST FLOOR</div><div style="font-size:18px;color:#888;margin-top:8px">กำลังเปิดประตูโรงแรม...</div><div id="loadbar"><i></i></div></div>
+
+  <!-- MAIN MENU -->
+  <div id="menu" class="screen">
+    <img class="bg" data-src="bg_menu">
+    <div id="fog"></div>
+    <div class="hot" style="left:104px;width:338px;top:449px;height:69px" data-act="start"></div>
+    <div class="hot" style="left:110px;width:320px;top:537px;height:60px" data-act="continue" id="hotContinue"></div>
+    <div class="hot" style="left:110px;width:320px;top:611px;height:59px" data-act="load"></div>
+    <div class="hot" style="left:110px;width:344px;top:685px;height:59px" data-act="charsel"></div>
+    <div class="hot" style="left:110px;width:320px;top:759px;height:59px" data-act="options"></div>
+    <div class="hot" style="left:110px;width:320px;top:833px;height:59px" data-act="exit"></div>
+    <div id="menuArchive" class="hot2"><img data-src="it_talisman"> สารานุกรมผี · GHOST ARCHIVE <b id="marcount"></b></div>
+    <div class="ver">v1.0 · คลิกหรือกดปุ่มเพื่อเริ่ม</div>
+  </div>
+
+  <!-- SAVE SLOTS -->
+  <div id="slots" class="screen">
+    <img class="dark-bg" data-src="bg_corridor">
+    <div class="title ink" id="slotTitle">เลือกช่องบันทึก<small>SAVE SLOTS</small></div>
+    <div id="slotlist"></div>
+    <img class="btnimg" data-src="i_back" style="position:absolute;left:30px;top:30px;height:74px" onclick="UI.back()">
+  </div>
+
+  <!-- CHARACTER SELECT -->
+  <div id="charsel" class="screen">
+    <img class="dark-bg" data-src="bg_corridor">
+    <div class="title ink" style="top:22px">เลือกผู้รอดชีวิต<small>CHARACTER SELECT</small></div>
+    <div id="cgrid"></div>
+    <div id="cdetail" class="frame">
+      <div id="cportrait"><img id="cpimg"></div>
+      <div id="ctext">
+        <div id="cname"></div><div id="cgender"></div>
+        <div id="cbio"></div>
+        <div id="cskill"><b id="cskname"></b><p id="cskdesc"></p></div>
+      </div>
+      <div id="cstats"></div>
+      <div id="cplay"></div>
+      <div id="cbtns"><img class="btnimg" data-src="b_cancel" onclick="UI.back()"><img class="btnimg" data-src="b_confirm" onclick="CharSel.confirm()"></div>
+    </div>
+  </div>
+
+  <!-- CUTSCENE -->
+  <div id="cut" class="screen">
+    <img class="bg" id="cutbg">
+    <div id="cutactors"></div>
+    <div id="note"></div>
+    <div id="cutbox"><img class="bgi" data-src="hud_text"><div id="cutname"></div><div id="cuttext"></div><div id="cutnext">▼ คลิก / SPACE</div></div>
+        <div class="tbtn" id="cutskipbtn" style="position:absolute;right:24px;top:20px;min-width:110px;height:46px;font-size:18px" onclick="Cut.skip()">SKIP ⏭</div>
+  </div>
+
+  <!-- GAME -->
+  <div id="game" class="screen">
+    <div id="shake">
+      <div id="world"><img class="bg" id="wbg"><div id="layer"></div><div id="pshadow"></div><img id="player"></div>
+      <div id="grain"></div>
+      <div id="fxdark"></div>
+      <div id="vignette"></div>
+      <div id="redpulse"></div>
+    </div>
+    <div id="toast"></div>
+    <div id="itembar">
+      <div id="talbtn" title="แปะยันต์ [T]"><div id="talicons"></div><b id="talcount">×4</b><small>[T] แปะยันต์</small></div>
+      <div class="ibox" id="bellbox" title="สั่นกระดิ่ง [B]"><img data-src="it_bell"><b id="bellcount">×1</b><small>[B]</small></div>
+      <div class="ibox" id="incbox" title="จุดธูป: Heart Rate −20% [G]"><img data-src="it_incense"><b id="inccount">×1</b><small>[G]</small></div>
+      <div class="ibox" id="charmbox" title="พระเครื่อง: กันการถูกส่งกลับ 1 ครั้ง"><img data-src="it_charm"><small>คุ้มกัน</small></div>
+    </div>
+    <div id="mobilepad"><div id="padL">◀</div><div id="padR">▶</div></div>
+    <div id="hud">
+      <img class="panel" id="hface" data-src="hud_face">
+      <img class="panel" id="htext" data-src="hud_text">
+      <img class="panel" id="hstat" data-src="hud_stat">
+      <div id="hportrait"><img id="hpimg"></div>
+      <div id="hspeaker"></div><div id="hmsg"></div><div id="hmore">▼</div>
+      <div id="hfloor"><img data-src="i_stairs"><span id="hfloornum">ชั้นที่ 50</span></div>
+      <div id="hgear" title="หยุดเกม / ตั้งค่า"></div>
+      <img id="hheart" data-src="hr0">
+      <svg id="hecg" viewBox="0 0 300 50"><polyline id="ecgline" fill="none" stroke="#eee" stroke-width="2" points=""/></svg>
+      <div id="hbar"></div>
+      <div id="hlevel">CALM</div>
+      <div id="skillbtn"></div>
+      <img id="savedicon" data-src="i_save">
+    </div>
+    <div id="flash"></div>
+    <div id="jump"><div id="jumpface"></div><div id="jumpred"></div></div>
+    <div id="titlecard"><span id="tcsub">GRAND HOTEL</span><b id="tcmain">50F</b><span id="tcsub2"></span></div>
+  </div>
+
+  <!-- DEATH -->
+  <div id="death" class="screen">
+    <img id="dghost"><img class="dp" id="dpimg">
+    <div class="info">
+      <h1 id="dtitle">YOU DIED</h1><div class="sub">คุณไม่ได้เช็กเอาต์</div>
+      <div class="row" id="drows"></div>
+      <div class="cause" id="dcause"></div>
+      <div style="display:flex;gap:20px"><button class="tbtn red" onclick="Game.retry()">↻ RETRY</button><button class="tbtn" onclick="UI.toMenu()">MAIN MENU</button></div>
+    </div>
+  </div>
+
+  <!-- ENDING -->
+  <div id="ending" class="screen">
+    <img class="bg" id="endbg" data-src="bg_end"><div id="endflash"></div>
+    <div id="endpanel" class="frame"></div>
+    <div id="endstory"></div><button class="tbtn" id="endskip" style="min-width:110px;height:46px;font-size:18px">SKIP ⏭</button>
+  </div>
+
+  <div id="archive" class="screen">
+    <img class="dark-bg" data-src="bg_corridor">
+    <div class="title ink" style="top:18px">สารานุกรมผีแห่ง GRAND HOTEL<small id="acount"></small></div>
+    <div id="agrid"></div>
+    <div id="adetail" class="frame"></div>
+    <img class="btnimg" data-src="i_back" style="position:absolute;left:30px;top:24px;height:70px" onclick="UI.back()">
+  </div>
+
+  <div id="modal"><div id="mbox" class="frame"><h2 id="mtitle"></h2><div id="mbody"></div><div id="mbtns"></div></div></div>
+</div>
+
+<script src="assets.js"></script>
+<script>
+"use strict";
+/* =========================================================
+   THE LAST FLOOR — 2D psychological horror / anomaly detection
+   ========================================================= */
+const A = {};            // loaded images  name -> {src, ar}
+const STAGE_W = 1672, STAGE_H = 941;
+const $ = s => document.querySelector(s);
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const src = n => (window.ASSET_DATA && ASSET_DATA[n]) || ('a/' + n + '.webp');
+
+/* ---------------- storage (wrapped: may be unavailable) ---------------- */
+const Store = {
+  mem: {},
+  get(k) { try { const v = localStorage.getItem(k); return v == null ? (this.mem[k] ?? null) : JSON.parse(v); } catch (e) { return this.mem[k] ?? null; } },
+  set(k, v) { this.mem[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { delete this.mem[k]; try { localStorage.removeItem(k); } catch (e) {} }
+};
+
+/* ---------------- RNG ---------------- */
+function rngFrom(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const pick = (r, arr) => arr[Math.floor(r() * arr.length)];
+function shuffle(r, arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+
+/* =========================================================
+   DATA: CHARACTERS
+   ========================================================= */
+const CHARS = [
+  { id: 'erin', name: 'ERIN', th: 'เอริน', gender: 'หญิง', age: 17,
+    bio: 'นักกรีฑาประจำโรงเรียน ใจสู้และไม่เคยถอยง่าย ๆ แผลที่หัวเข่ามาจากการปีนรั้วเข้าโรงแรมคืนนี้ เธอเชื่อว่าความกลัวเป็นแค่สัญญาณให้ร่างกายเตรียมวิ่ง',
+    skill: 'Survival Instinct', skillTh: 'สัญชาตญาณเอาตัวรอด', type: 'passive',
+    desc: 'ลดอัตราการเพิ่ม Heart Rate 20% เมื่ออยู่ในชั้นที่มี Anomaly (ไม่ได้บอกตำแหน่งของ Anomaly)',
+    play: 'เหมาะสำหรับผู้เล่นที่ต้องการควบคุมความตื่นกลัว', stats: { กล้า: 4, สายตา: 2, โชค: 2, ใจนิ่ง: 3 },
+    line: 'ตั้งสติไว้ เอริน... วิ่งให้ถึงชั้นหนึ่ง แล้วค่อยกลับมาตามทุกคน' },
+  { id: 'mira', name: 'MIRA', th: 'มิระ', gender: 'หญิง', age: 18,
+    bio: 'ช่างภาพสาวผู้หลงใหลสถานที่ร้าง เธอคือคนที่ชวนทุกคนมาที่ GRAND HOTEL คืนนี้ กล้องฟิล์มเก่าของยายมักจับภาพสิ่งที่ตาเปล่ามองไม่เห็น',
+    skill: 'Sharp Observation', skillTh: 'สายตาช่างสังเกต', type: 'passive',
+    desc: 'เมื่ออยู่ในชั้นที่มี Anomaly มีโอกาสเกิด Visual Hint เล็กน้อย เช่น แสงสะท้อนจากเลนส์ แต่ไม่บอกตำแหน่งหรือชนิดของ Anomaly',
+    play: 'เหมาะสำหรับผู้เล่นที่ชอบสังเกตและค้นหาความผิดปกติ', stats: { กล้า: 2, สายตา: 4, โชค: 2, ใจนิ่ง: 3 },
+    line: 'ฉันเป็นคนชวนทุกคนมาเอง... ฉันต้องพาทุกคนกลับไปให้ได้' },
+  { id: 'lin', name: 'LIN', th: 'หลิน', gender: 'หญิง', age: 17,
+    bio: 'ประธานชมรมดนตรี นักเป่าฟลุตที่ฝึกลมหายใจทุกวัน เงียบขรึมและสุขุม ทุกครั้งที่ตื่นกลัว เธอจะนับจังหวะหายใจในใจ หนึ่ง... สอง... สาม...',
+    skill: 'Calm Breathing', skillTh: 'ลมหายใจสงบ', type: 'active',
+    desc: 'กดใช้เพื่อลด Heart Rate ลง 15% · Cooldown 5 ชั้น',
+    play: 'เหมาะสำหรับผู้เล่นที่ต้องการจัดการ Heart Rate ในช่วงที่เริ่มตื่นกลัว', stats: { กล้า: 2, สายตา: 3, โชค: 2, ใจนิ่ง: 4 },
+    line: 'หายใจเข้า... หายใจออก... ที่นี่แค่โรงแรมเก่าเท่านั้น' },
+  { id: 'kirin', name: 'KIRIN', th: 'คิริน', gender: 'ชาย', age: 18,
+    bio: 'หนอนหนังสือแว่นหนาเตอะ ความจำดีเยี่ยม พกสมุดบันทึกติดตัวเสมอและจดทุกอย่างที่เห็น เขาไม่เชื่อเรื่องผี จนกระทั่งคืนนี้',
+    skill: 'Memory Record', skillTh: 'บันทึกความทรงจำ', type: 'active',
+    desc: 'กดใช้เพื่อเปิดดูภาพอ้างอิง (Base Layout) ของโซนที่กำลังเดินอยู่ · ใช้ได้ 1 ครั้งต่อ 5 ชั้น',
+    play: 'เหมาะสำหรับผู้เล่นที่ชอบจดจำตำแหน่งและเปรียบเทียบสิ่งของ', stats: { กล้า: 2, สายตา: 3, โชค: 2, ใจนิ่ง: 4 },
+    line: 'ทุกอย่างมีรูปแบบ... ถ้าจำรูปแบบได้ ก็หาสิ่งที่ผิดได้' },
+  { id: 'ren', name: 'REN', th: 'เรน', gender: 'ชาย', age: 18,
+    bio: 'นักมวยสมัครเล่น ใจร้อนแต่ปกป้องเพื่อนเสมอ เขาไม่เคยยอมแพ้ในสังเวียน และไม่คิดจะยอมแพ้ให้โรงแรมบ้า ๆ นี่เหมือนกัน',
+    skill: 'Last Chance', skillTh: 'โอกาสสุดท้าย', type: 'passive',
+    desc: 'เมื่อตัดสินใจผิดและกำลังจะเสียชีวิต จะถอยหนีเอาตัวรอดได้ทันที · ใช้ได้ 1 ครั้งต่อ 5 ชั้น',
+    play: 'เหมาะสำหรับผู้เล่นที่ต้องการโอกาสแก้ตัว', stats: { กล้า: 4, สายตา: 2, โชค: 3, ใจนิ่ง: 2 },
+    line: 'มาสิ! อยากเล่นนักใช่มั้ย ฉันจะเดินลงไปให้ถึงข้างล่างเอง' },
+  { id: 'zen', name: 'ZEN', th: 'เซน', gender: 'ชาย', age: 17,
+    bio: 'หนุ่มสบาย ๆ ที่ดวงดีผิดมนุษย์ ชนะรางวัลจับฉลากทุกปี ล้มทีไรก็มีอะไรมารองรับ เพื่อน ๆ เรียกเขาว่า "เครื่องรางเดินได้"',
+    skill: 'Lucky Survivor', skillTh: 'ผู้รอดเพราะดวง', type: 'passive',
+    desc: 'มีโอกาส 15% ที่จะไม่เพิ่ม Heart Rate เมื่อเข้าสู่ชั้นใหม่',
+    play: 'เหมาะสำหรับผู้เล่นที่ชอบความเสี่ยงและต้องการประหยัด Heart Rate', stats: { กล้า: 3, สายตา: 2, โชค: 4, ใจนิ่ง: 2 },
+    line: 'โอเค... ดวงฉันดีเสมอ ใช่มั้ย? ใช่สิ' }
+];
+const CH = id => CHARS.find(c => c.id === id);
+// which way each drawing faces (1 = right, -1 = left)
+const BASE_FACING = { zen: -1, lin: 1, kirin: -1, erin: 1, ren: -1, mira: 1 };
+
+/* =========================================================
+   DATA: OBJECTS  (GDD §6.5 — id, name, category, sprite, kind, base scale, spawn weight, floor/zone restrictions)
+   kind: floor | mid (wall, door height) | hi (upper wall) | ceil
+   ========================================================= */
+const OBJECTS = [
+  // floor furniture / equipment
+  ['armchair','เก้าอี้นวม','furniture','f_armchair','floor',125,[0,1]],
+  ['sofa','โซฟา','furniture','f_sofa','floor',112,[0]],
+  ['chair','เก้าอี้ไม้','furniture','f_chair','floor',135,[0,2,3]],
+  ['plant1','กระถางต้นไม้','decor','f_plant1','floor',140,[0,1,2]],
+  ['plant2','ต้นไม้ใบใหญ่','decor','f_plant2','floor',140,[0,3]],
+  ['lamp','โคมไฟตั้งพื้น','decor','f_lamp','floor',150,[0,2]],
+  ['sidetable','โต๊ะข้าง','furniture','f_sidetable','floor',105,[0,2]],
+  ['roundtable','โต๊ะกลมคลุมผ้า','furniture','f_roundtable','floor',112,[0,2]],
+  ['bookshelf','ชั้นหนังสือ','furniture','f_bookshelf','floor',200,[2,3]],
+  ['cabinet','ตู้กระจก','furniture','f_cabinet','floor',195,[2]],
+  ['filing','ตู้ลิ้นชักเอกสาร','furniture','f_filing','floor',170,[1,3]],
+  ['coatrack','ที่แขวนเสื้อ','furniture','f_coatrack','floor',200,[0,2]],
+  ['luggage','รถเข็นกระเป๋า','hotel','f_luggage','floor',185,[0,1]],
+  ['svccart','รถเข็นบริการ','hotel','f_svccart','floor',160,[1]],
+  ['laundry','รถเข็นผ้า','hotel','f_laundry','floor',150,[1,4]],
+  ['vending','ตู้ขายสินค้า','hotel','f_vending','floor',215,[1]],
+  ['cooler','ตู้กดน้ำ','hotel','f_cooler','floor',180,[1]],
+  ['stanchion','เสากั้นทาง','hotel','f_stanchion','floor',115,[0]],
+  ['wheelchair','รถเข็นคนไข้','hotel','f_wheelchair','floor',150,[3]],
+  ['divider','ฉากกั้น','furniture','f_divider','floor',185,[3]],
+  ['caution','ป้ายระวังพื้นลื่น','hotel','f_caution','floor',120,[1,4]],
+  ['bins','ถังขยะ','hotel','f_bins','floor',118,[1,4]],
+  ['grandclock','นาฬิกาตั้งพื้น','decor','f_grandclock','floor',215,[2]],
+  ['shrine','ศาลจำลอง','decor','f_shrine','floor',160,[2]],
+  ['flowers','แจกันดอกไม้','decor','f_flowers','floor',150,[0,2]],
+  ['buddha','รูปปั้นพระ','decor','f_buddha','floor',140,[2]],
+  ['boxes','กล่องลัง','misc','f_boxes','floor',95,[4]],
+  ['trunk','หีบเก่า','misc','f_trunk','floor',90,[4,2]],
+  ['cone','กรวยจราจร','misc','f_cone','floor',95,[4]],
+  ['suitcase','กระเป๋าเดินทาง','misc','p_suitcase','floor',135,[0,4]],
+  ['catstatue','แมวกวัก','decor','p_catstatue','floor',100,[2]],
+  ['bust','รูปปั้นครึ่งตัว','decor','p_bust','floor',165,[0,2]],
+  ['tv','โทรทัศน์เก่า','hotel','p_tv','floor',110,[3,4]],
+  ['desk','โต๊ะทำงาน','furniture','p_desk','floor',120,[1,3]],
+  ['officechair','เก้าอี้สำนักงาน','furniture','p_officechair','floor',140,[1,3]],
+  ['lockers','ตู้ล็อกเกอร์','furniture','p_lockers','floor',205,[3,4]],
+  ['ladder','บันไดพับ','misc','p_ladder','floor',185,[4]],
+  ['trashbags','ถุงขยะ','misc','p_trashbags','floor',95,[4]],
+  ['stretcher','เตียงเข็น','hotel','h_stretcher','floor',120,[3]],
+  ['iv','เสาน้ำเกลือ','hotel','h_iv','floor',185,[3]],
+  // wall, door height
+  ['clock','นาฬิกาแขวน','decor','f_clock','mid',78,[0,1,2,3,4]],
+  ['paint1m','ภาพวิวภูเขา','decor','f_paint1','mid',68,[0,2]],
+  ['paint2m','ภาพป่ายามเช้า','decor','f_paint2','mid',82,[0,2]],
+  ['paintflower','ภาพดอกไม้','decor','f_paint_flower','mid',82,[0,2,3]],
+  ['mirror','กระจกวงรี','decor','f_mirror','mid',100,[0,2]],
+  ['mirror2','กระจกบานยาว','decor','f_mirror2','mid',108,[2]],
+  ['notice','บอร์ดประกาศ','hotel','f_notice','mid',72,[1,3,4]],
+  ['extinguisher','ถังดับเพลิง','hotel','f_extinguisher','mid',110,[1,3,4]],
+  ['elecbox','ตู้ไฟ','hotel','f_elecbox','mid',85,[1,4]],
+  ['exitsign','ป้ายทางหนีไฟ','hotel','f_exitsign','mid',42,[1,3,4]],
+  ['hotelsignm','ป้ายโรงแรม','hotel','f_hotelsign','mid',80,[0]],
+  ['window','หน้าต่าง','env','f_window','mid',100,[3,4]],
+  // upper wall
+  ['paint1h','ภาพวิวภูเขา','decor','f_paint1','hi',92,[0,2]],
+  ['paint2h','ภาพป่ายามเช้า','decor','f_paint2','hi',100,[0,2]],
+  ['family','ภาพครอบครัว','decor','f_paint_family','hi',98,[2]],
+  ['notice2','บอร์ดประกาศเก่า','hotel','f_notice2','hi',84,[1,3]],
+  ['hotelsign','ป้ายโรงแรม','hotel','f_hotelsign','hi',98,[0,1]],
+  ['boarded','หน้าต่างตีไม้','env','f_window_board','hi',105,[4]],
+  ['curtain','ผ้าม่าน','decor','f_curtain','hi',112,[0,3]],
+  ['acunit','เครื่องปรับอากาศ','hotel','f_acunit','hi',55,[1,3,4]],
+  ['vent','ช่องระบายอากาศ','hotel','f_vent','hi',70,[1,4]],
+  ['crackwin','หน้าต่างร้าว','env','f_crack_win','hi',104,[4]],
+  // ceiling
+  ['lantern','โคมไฟกรง','light','f_lantern','ceil',90,[1,4]],
+  ['pendant','โคมไฟห้อย','light','f_pendant','ceil',80,[0,2,3]],
+  ['fan','พัดลมเพดาน','hotel','f_fan','ceil',44,[0,2]],
+  ['cctv','กล้องวงจรปิด','hotel','f_cctv','ceil',70,[1,3,4]]
+].map(([id, name, cat, sprite, kind, h, zones]) => ({ id, name, cat, sprite, kind, h, zones, weight: 1 }));
+const OBJ = id => OBJECTS.find(o => o.id === id);
+
+/* layout geometry (world coordinates = corridor art 1672x941) */
+const DOORX = [399, 617, 835, 1053, 1271];
+const GAPX = [508, 726, 944, 1162];
+const SLOTS = { floor: [372, 560, 748, 936, 1124, 1300], mid: GAPX, hi: GAPX, ceil: DOORX };
+const KIND_MAXW = { floor: 185, mid: 92, hi: 170, ceil: 175 };
+const ZONE_COUNTS = { floor: 4, mid: 3, hi: 3, ceil: 3 };
+const ZONE_NAMES = ['โซนต้อนรับ (Lobby Wing)', 'โซนบริการ (Service Wing)', 'โซนศาลเจ้า (Old Shrine Wing)', 'โซนพยาบาล (Infirmary Wing)', 'โซนพังทลาย (Ruined Wing)'];
+const FLOOR_Y = 752, DOOR_BOTTOM = 705, DOOR_H = 270, DOOR_W = 128;
+
+function zoneOf(f) { return f >= 41 ? 0 : f >= 31 ? 1 : f >= 21 ? 2 : f >= 11 ? 3 : 4; }
+
+/* =========================================================
+   GHOST ENCYCLOPEDIA — every ghost has a name, a danger tier (1-5) and a story
+   tier decides how deep in the hotel it lives (1 = upper floors … 5 = bottom floors)
+   ========================================================= */
+const GHOSTS = [
+  ['A00','แม่หนูรอแม่',1,'นั่งคุกเข่ารอแม่อยู่หน้าห้อง 4807 ตั้งแต่คืนปี 1999 ถ้าเดินผ่านโดยไม่ทัก เธอจะคลานตามไปจนสุดทางเดิน'],
+  ['A01','นางกรีดเสียง',2,'เสียงกรีดร้องของเธอคือสิ่งสุดท้ายที่แขกได้ยินก่อนไฟดับทุกครั้ง ยิ่งเงียบนานเท่าไร เสียงถัดไปจะยิ่งดัง'],
+  ['A02','เด็กชายตาขาว',1,'นักเรียนที่หลงขึ้นลิฟต์ผิดตัว เขายังเดินถามทางไปชั้น 1 กับทุกคนที่ผ่านมา อย่าบอกทางเขา'],
+  ['A03','พยาบาลกะดึก',2,'ประจำห้องพยาบาลชั้น 13 ซึ่งไม่มีอยู่จริง เธอจะวัดชีพจรคุณด้วยมือที่เย็นเฉียบ แล้วจดว่า "ใกล้แล้ว"'],
+  ['A04','พนักงานยกกระเป๋าฟันแหลม',2,'ยิ้มต้อนรับแขกด้วยฟันทุกซี่ที่เขามี และที่เขาเก็บสะสมเพิ่มจากแขกที่ไม่ให้ทิป'],
+  ['A05','เจ้าสาวห้องบอลรูม',3,'งานแต่งในห้องบอลรูมไม่เคยจบลง เธอยังรอเจ้าบ่าวที่วิ่งหนีลงบันไดหนีไฟไปเมื่อ 27 ปีก่อน'],
+  ['A06','ลุงหัวเราะ',1,'แขกประจำที่เช็กอินมานาน 40 ปี หัวเราะได้กับทุกเรื่อง ยกเว้นคำว่า "เช็กเอาต์"'],
+  ['A07','ร่างโหยหิว',3,'ผอมจนเห็นซี่โครงทุกซี่ อ้าปากกว้างเพื่อกลืนเสียงหายใจของคุณให้หมด'],
+  ['A08','ผู้หมอบมุมห้อง',2,'นั่งยองอยู่ในมุมที่กล้องวงจรปิดมองไม่เห็นเสมอ ถ้าคุณมองเห็นมัน แปลว่าคุณยืนผิดที่แล้ว'],
+  ['A09','เกอิชาห้องจัดเลี้ยง',2,'ห้องจัดเลี้ยงสไตล์ญี่ปุ่นยังมีเสียงซามิเซ็นดังตอนตีสาม เธอรินชาให้แขกที่ไม่มีวันลุกจากโต๊ะ'],
+  ['A10','หนูกับกระต่าย',1,'ขอให้คุณเล่นด้วย ถ้าปฏิเสธ ตุ๊กตากระต่ายของเธอจะได้เพื่อนใหม่ที่หน้าตาเหมือนคุณ'],
+  ['A11','แฝดห้อง 2222',2,'ไม่มีใครรู้ว่าคนไหนพี่คนไหนน้อง แม้แต่พวกเธอเอง ถ้าเห็นแค่คนเดียว อีกคนอยู่ข้างหลังคุณ'],
+  ['A12','นักเรียนชุดกะลาสี',1,'หายตัวไประหว่างทัศนศึกษา เพื่อนร่วมห้องยังไม่เคยได้รับจดหมายลาของเธอ'],
+  ['A13','สาวน้ำตาเลือด',3,'ร้องไห้เป็นเลือดทุกครั้งที่มีใครพูดถึงห้อง 2804 อย่าเอ่ยเลขห้องนั้นออกมา'],
+  ['A14','ยิ้มไม่หุบ',2,'ยิ้มกว้างขึ้นทีละนิดทุกครั้งที่คุณมองไปทางอื่น จนวันหนึ่งริมฝีปากจะไปถึงใบหู'],
+  ['A15','เสียงสุดท้าย',3,'คอของเธอยืดตามเสียงกรีดร้องที่ไม่มีวันจบ ยิ่งร้อง คอยิ่งยาว'],
+  ['A16','ก้อนเงาตาไฟ',3,'เงาที่หลุดออกจากร่างเจ้าของ ตอนนี้กำลังหาร่างใหม่ให้ตัวเองอาศัย'],
+  ['A17','ผมร้อยตา',4,'ทุกเส้นผมมีดวงตา และทุกดวงตาจำใบหน้าของคุณได้ แม้คุณจะออกจากโรงแรมไปแล้ว'],
+  ['A18','นักชิมลิ้นยาว',3,'อดีตนักชิมประจำภัตตาคารชั้นบนสุด เขายังหิวอยู่ และเมนูวันนี้คือแขกที่หลงทาง'],
+  ['A19','หน้ากากขาว',3,'ไม่มีใบหน้า มีเพียงหน้ากากที่เปลี่ยนรูปตามคนที่มองมัน ถ้าหน้ากากเหมือนคุณ ให้วิ่ง'],
+  ['A20','ชายหมวกดำ',4,'ผู้จัดการโรงแรมคนแรก ยังเดินตรวจห้องทุกคืนตามตารางเดิม และจดชื่อแขกที่ไม่อยู่ในห้อง'],
+  ['A21','กลุ่มตาเฝ้ายาม',4,'ระบบรักษาความปลอดภัยที่ไม่เคยถูกถอดออก มันไม่เคยกะพริบตา'],
+  ['A22','สองหัวใจเดียว',3,'พี่น้องที่ไม่ยอมแยกจากกันแม้ในความตาย พวกเธอเถียงกันตลอดว่าจะกินใครก่อน'],
+  ['A23','ร่างตาเต็มอก',4,'แผลทุกแผลบนตัวมันลืมตาขึ้นมามองคุณ และทุกดวงร้องไห้'],
+  ['A24','คอหักแหงนฟ้า',3,'มองเพดานตลอดเวลา เพราะสิ่งที่มันกลัวอยู่ข้างบน'],
+  ['A25','แขกห้อง 1902',2,'แขกหนุ่มที่ไม่ยอมตายดี ๆ เขายังกัดทุกอย่างที่ขยับได้'],
+  ['A26','หัวจอทีวี',3,'เคยทำงานในห้องควบคุม ตอนนี้จอบนบ่าของเขาฉายภาพสุดท้ายที่คุณจะได้เห็น'],
+  ['A27','โคมระย้าผมยาว',3,'แขวนอยู่กลางล็อบบี้ เส้นผมของเธอคือสายไฟ เมื่อไฟกะพริบ แปลว่าเธอหายใจ'],
+  ['A28','แม่บ้านยิ้มแหง',2,'เก็บกวาดทุกห้องให้สะอาดหมดจด รวมถึงแขกที่ลืมเช็กเอาต์'],
+  ['A29','แมงมุมสาว',4,'เดินสี่ขาหงายท้องไปตามเพดานทางเดิน ได้ยินเสียงเล็บข่วนเหนือหัวเมื่อไร อย่าเงยหน้า'],
+  ['A30','คนคลานใต้เตียง',3,'อาศัยอยู่ใต้เตียงห้องพักมานานหลายปี คืนนี้มันออกมาเดินเล่น'],
+  ['A31','ก้อนเนื้อกระหาย',5,'สิ่งที่เหลือจากแขกหลายคนที่ถูกรวมเป็นหนึ่ง มันยังพูดด้วยเสียงหลายเสียงพร้อมกัน'],
+  ['A32','แฝดผมบ็อบ',2,'ชวนคุณเล่นซ่อนแอบ และไม่เคยยอมให้คุณชนะ คนที่แพ้ต้องอยู่เป็นคนหาตลอดไป'],
+  ['A33','เงาตาเหลือง',3,'ยืนนิ่งอยู่ปลายทางเดิน ทุกครั้งที่คุณกะพริบตา มันจะใกล้เข้ามาอีกก้าว'],
+  ['A34','แม่ชีหัวกะโหลก',4,'สวดภาวนาให้คุณทุกคืน แต่ไม่ได้สวดให้คุณรอด'],
+  ['A35','รถเข็นกระเป๋าผี',2,'ขนสัมภาระของแขกที่ไม่มีวันมารับคืน บางใบยังขยับอยู่ข้างใน'],
+  ['A36','วีลแชร์ห้อง 13',3,'ล้อหมุนเองทุกคืน พาเธอไปรอลิฟต์ที่ไม่เคยมาถึง'],
+  ['A37','เสื้อเปื้อนไร้ร่าง',2,'เครื่องแบบของพนักงานที่หายตัวไป ยังเดินตรวจเวรแทนเจ้าของ'],
+  ['A38','ตาที่คอ',4,'ไม่มีหัวแต่ยังมองเห็น เพราะดวงตาย้ายไปอยู่ที่อก มันกำลังหาหัวใหม่ที่พอดี'],
+  ['A39','ปากเขี้ยวในผม',5,'ทั้งตัวเป็นปาก และมันหิวตลอดเวลา เสียงฟันกระทบกันคือคำเตือนเดียวที่คุณจะได้'],
+  ['A40','ม่านเนื้อละลาย',4,'ห้อยอยู่ตามช่องลม ไหลลงมาช้า ๆ เหมือนเทียนที่จุดทิ้งไว้ทั้งคืน'],
+  ['A41','สิ่งคลานผมยาว',4,'เดินเหมือนสัตว์ แต่ร้องไห้เหมือนผู้หญิง ถ้าได้ยินเสียงร้องไห้ใกล้พื้น อย่าก้มมอง'],
+  ['A42','หน้ากะโหลกหลอมเหลว',4,'ใบหน้าของมันละลายไปทุกครั้งที่มีคนจำชื่อมันได้ คุณเพิ่งจำได้'],
+  ['A43','โครงกระดูกวิ่ง',3,'วิ่งขึ้นลงบันไดหนีไฟไม่หยุดตั้งแต่คืนไฟไหม้ มันยังหาทางออกไม่เจอ'],
+  ['A44','ภาพเหมือนห้องโถง',2,'ภาพวาดหญิงสาวที่เปลี่ยนสีหน้าเมื่อคุณหันหลัง บางคืนกรอบรูปว่างเปล่า'],
+  ['A45','กระจกมือ',2,'มือในกระจกอยากออกมาจับมือคุณ ถ้าคุณยื่นมือไป คุณจะเป็นคนที่อยู่ในกระจกแทน'],
+  ['A46','หุ่นโชว์หัวหมุน',1,'หัวหุ่นจากร้านชุดชั้นล่าง หมุนตามคุณเสมอ ไม่ว่าคุณจะเดินไปทางไหน'],
+  ['A47','เด็กสาวตาแดง',2,'ถามชื่อคุณด้วยเสียงหวาน แล้วเขียนมันลงในสมุดลงทะเบียนของโรงแรม'],
+  ['A48','ตัวตลกงานวันเกิด',3,'ถูกจ้างมาเล่นงานวันเกิดปี 1998 ยังไม่มีใครจ่ายค่าจ้าง เขาจึงเก็บเป็นอย่างอื่นแทน'],
+  ['A49','สุภาพบุรุษหมวกทรงสูง',4,'เสนอข้อตกลงให้แขกทุกคน ไม่มีใครอ่านสัญญาจนจบ บรรทัดสุดท้ายเขียนว่า "ตลอดไป"'],
+  ['A50','กองหน้าแขก',5,'แขกทั้งชั้นที่หายไปในคืนเดียว พวกเขายังกรีดร้องเป็นเสียงเดียวกัน'],
+  ['B001','นางคร่ำครวญ',1,'ร้องไห้คร่ำครวญหาลูกที่หายไปในลิฟต์ เสียงของเธอดังมาจากช่องลิฟต์ทุกคืน'],
+  ['B002','ปากเหวลึก',3,'อ้าปากได้กว้างกว่าศีรษะ ข้างในมืดสนิทและได้ยินเสียงคนเรียกชื่อคุณ'],
+  ['B003','ผีหนวดคลั่ง',4,'เส้นผมที่กลายเป็นหนวดคอยรัดทุกอย่างที่ผ่านเข้ามาใกล้'],
+  ['B005','พยาบาลห้องฉุกเฉิน',2,'ตาเหลือกตลอดเวลาเพราะไม่ได้นอนมา 27 ปี เธอยังรอหมอที่ไม่มีวันมาถึง'],
+  ['B006','รังปากนับร้อย',5,'ก้อนปากนับร้อยที่เกาะกันเป็นรัง ทุกปากพูดคำเดียวกัน — "หิว"'],
+  ['B007','ร่างกิ่งไม้',4,'แขนขายาวเหมือนกิ่งไม้แห้ง ยืนแฝงตัวอยู่ระหว่างกระถางต้นไม้ในทางเดิน'],
+  ['B008','ปากใต้รากไทร',5,'รากที่แตกออกจากผนังมีปากอยู่ตรงกลาง มันดูดกินทุกอย่างที่ยืนอยู่บนเงาของมัน'],
+  ['B009','นักธุรกิจปากคอ',3,'แขก VIP ที่ใบหน้ากลายเป็นปากขนาดใหญ่ เขายังโทรศัพท์คุยงานอยู่ทุกคืน'],
+  ['B010','ร่างก้านไม้',3,'ผอมจนเหลือแค่ก้าน เดินเอียงไปมาเหมือนจะล้ม แต่ไม่เคยล้ม'],
+  ['B011','สองผู้ไว้ทุกข์',3,'คู่ผีในผ้าคลุมที่มางานศพของตัวเองทุกปี และนับจำนวนแขกที่มาร่วมงาน'],
+  ['B012','ลูกตุ้มปาก',5,'ก้อนกลมที่เต็มไปด้วยปากเล็ก ๆ กลิ้งไปตามทางเดินโดยไม่มีเสียง'],
+  ['B014','ผู้ซ่อนใต้ผม',2,'มีเพียงดวงตาสองดวงที่เรืองแสงอยู่ใต้ผมยาว ไม่มีใครเห็นใบหน้าจริงของมัน'],
+  ['B015','แขกตัวน้อยห้อง 3501',1,'เด็กหญิงตาโหลที่ถามทุกคนว่าเห็นพ่อแม่ของเธอหรือเปล่า'],
+  ['B016','เสียงตะโกนจากลิฟต์',2,'ติดอยู่ในลิฟต์ตัวที่สี่ระหว่างชั้น ยังตะโกนขอความช่วยเหลืออยู่ทุกคืน'],
+  ['B017','ผ้าปูที่นอนเดินได้',1,'ผ้าปูที่นอนที่แม่บ้านลืมเก็บ ตอนนี้มันเดินไปมาเองพร้อมใบหน้าที่ซึมผ่านผ้า'],
+  ['B018','แม่บ้านกะสุดท้าย',2,'ยังทำงานกะดึกที่ไม่มีวันเลิก ถ้าเธอเคาะประตูห้องคุณ อย่าตอบ'],
+  ['B019','ปากขนยุ่ง',4,'ขนยาวรุงรังปิดทุกอย่างยกเว้นปากที่เต็มไปด้วยฟันแหลม'],
+  ['B023','คุณนายหน้าขาว',2,'ภรรยาเจ้าของโรงแรมที่ทาหน้าขาวจัดทุกวัน รอต้อนรับแขกที่ล็อบบี้ด้วยรอยยิ้มนิ่ง'],
+  ['B024','แขก VIP ไร้หน้า',3,'แต่งสูทหรูแต่ไม่มีใบหน้า มีเพียงดวงตาสีขาวลอยอยู่ในความมืด'],
+  ['B025','หญิงเลี้ยงนกคอยาว',3,'เลี้ยงนกประหลาดไว้ในห้องสวีท นกตัวนั้นจะบอกเธอว่าคุณซ่อนอยู่ที่ไหน'],
+  ['B028','สิ่งที่ยิ้มจากใต้บันได',4,'คลานออกมาจากใต้บันไดหนีไฟ ยิ้มกว้างด้วยฟันที่ยาวเกินปาก'],
+  ['B031','ผู้เฝ้าหน้าต่าง',1,'ยืนมองออกนอกหน้าต่างทุกคืน รอใครบางคนที่สัญญาว่าจะกลับมา'],
+  ['B032','เสียงร้องใต้ผ้าคลุม',3,'ใต้ผ้าคลุมมีเพียงปากที่กรีดร้องไม่หยุด ไม่มีใครกล้าเปิดดูว่าข้างในคืออะไร'],
+  ['B033','เด็กหัวฟูหิวโหย',3,'เด็กชายผมฟูที่อ้าปากกว้างได้เกินมนุษย์ เขาไม่ได้กินอะไรมา 27 ปีแล้ว'],
+  ['B034','ผู้เดินค่อมตามหลัง',3,'เดินหลังค่อมตามแขกไปทุกที่ หันไปดูเมื่อไรมันจะหยุดและยิ้ม'],
+  ['B035','ผู้ไม่ยอมเปิดหน้า',2,'ผมยาวปิดใบหน้าตลอดเวลา ถ้าลมพัดผมเปิดออก คุณจะไม่อยากเห็น'],
+  ['B036','ผู้ประกาศข่าวช่องสุดท้าย',3,'หัวเป็นจอโทรทัศน์ที่ฉายแต่สัญญาณซ่า บางครั้งในเสียงซ่ามีชื่อคุณ'],
+  ['B037','พนักงานต้อนรับกะดึก',1,'ยังยืนประจำเคาน์เตอร์ ถามทุกคนว่า "ต้องการต่อเวลาเข้าพักไหมคะ"'],
+  ['B038','รังวิญญาณเด็ก',5,'ไข่ขนาดใหญ่ที่มีใบหน้าเด็กหลายคนอยู่ข้างใน พวกเขากำลังจะฟัก'],
+  ['B039','หญิงคลานจากอ่างน้ำ',3,'คลานออกมาจากอ่างอาบน้ำห้อง 3309 ผมเปียกและเย็นเหมือนน้ำแข็ง'],
+  ['B040','ม่านเงียบ',2,'ผ้าคลุมยาวที่ลอยไปตามทางเดินโดยไม่มีลม ไม่มีเสียง ไม่มีเงา'],
+  ['B043','ชายไร้ใบหน้า',4,'ใบหน้าเรียบสนิทไร้ตาจมูกปาก แต่เขามองเห็นคุณ และได้ยินทุกคำที่คุณคิด'],
+  ['B044','หัวกะโหลกลอยน้ำ',4,'หัวกะโหลกหลายหัวที่ไหลเยิ้มลงมาเหมือนน้ำตาเทียน'],
+  ['B045','หนอนกลืนทางเดิน',5,'หนอนยักษ์ที่ขุดอุโมงค์อยู่ระหว่างผนัง เสียงครืดคราดในผนังคือเสียงมัน'],
+  ['B046','ผู้มีรูทั่วหน้า',4,'ใบหน้าเต็มไปด้วยรูเหมือนรังผึ้ง มีบางอย่างคลานเข้าออกอยู่ตลอด'],
+  ['B047','ประตูมืดเดินได้',3,'ผ้าคลุมสีดำที่ข้างในมืดเหมือนประตูไปที่อื่น อย่าเดินเข้าไป'],
+  ['B048','กองตาจับจ้อง',4,'ลูกตานับสิบที่เกาะกันเป็นก้อน ทุกดวงหมุนตามคุณพร้อมกัน'],
+  ['B051','ผู้กลืนเสียง',3,'ผมยาวปิดหน้า มีเพียงปากดำที่ดูดกลืนเสียงรอบตัวจนเงียบสนิท'],
+  ['B052','หนอนท่อระบายน้ำ',4,'อาศัยในท่อระบายน้ำของโรงแรม โผล่หัวออกมาเมื่อได้ยินเสียงฝีเท้า'],
+  ['B053','หญิงไม่อยากให้มอง',2,'ปิดหน้าร้องไห้ตลอดเวลา ถ้าเธอเอามือออก อย่ามองเด็ดขาด'],
+  ['B054','สิ่งยิ้มกว้างในท่อ',4,'ร่างไร้รูปทรงที่มีแต่รอยยิ้มเต็มไปด้วยฟัน ไหลออกมาจากช่องลม'],
+  ['B056','หญิงชุดยูกาตะ',2,'มางานเทศกาลบนดาดฟ้าเมื่อปี 1999 และไม่เคยได้กลับบ้าน'],
+  ['B059','ราชินีงานพรอม',2,'สวมมงกุฎงานพรอมที่จัดในห้องบอลรูม เธอยังรอคู่เต้นรำคนสุดท้าย'],
+  ['B060','ผู้กลั้นกรีดร้อง',2,'เอามือปิดปากตัวเองไว้ตลอดเวลา เพราะถ้าเธอร้องออกมา ทุกชั้นจะได้ยิน'],
+  ['B061','หัวเปลือกไข่',3,'หัวรูปไข่ที่มีรูกลวงแทนใบหน้า ลมที่พัดผ่านรูนั้นฟังเหมือนเสียงเรียก'],
+  ['B062','ก้อนฟันกระหาย',5,'ก้อนเนื้อที่มีปากใหญ่กว่าตัว กลิ้งตามกลิ่นความกลัว'],
+  ['B063','นายพลห้องประชุม',3,'นายทหารที่มาประชุมลับในโรงแรม ยังรอคำสั่งสุดท้ายที่ไม่มีวันมา'],
+  ['B065','ผู้ร้องเพลงในท่อ',3,'ร้องเพลงกล่อมเด็กเพี้ยน ๆ ผ่านท่อน้ำทุกคืน เสียงดังขึ้นเมื่อคุณเข้าใกล้'],
+  ['B066','ผ้าคลุมว่างเปล่า',2,'ผ้าคลุมที่ยืนได้เองโดยไม่มีอะไรอยู่ข้างใน หรือคุณแค่มองไม่เห็นมัน'],
+  ['B067','ศาลกลืนวิญญาณ',5,'ศาลเก่าที่ปากประตูมีฟัน วิญญาณที่หลงทางในโรงแรมถูกดูดเข้าไปที่นี่'],
+  ['B070','เด็กหญิงหมวกไหมพรม',1,'ใส่หมวกไหมพรมที่แม่ถักให้ เธอหนาวตลอดเวลา และอยากได้ผ้าพันคอของคุณ'],
+  ['B071','นักเรียนแลกเปลี่ยนที่หายไป',1,'นักเรียนผมทองที่มาพักกับทัศนศึกษา ยังจำทางกลับบ้านไม่ได้'],
+  ['B073','หมอนกหน้ากาก',4,'หมอโรคระบาดในหน้ากากนก มารักษาแขกที่ป่วย ด้วยวิธีที่ไม่มีใครรอด'],
+  ['B074','แมงมุมตาไข่',4,'ลูกตาขนาดใหญ่บนขายาวหลายขา เดินไต่ผนังได้เงียบกว่าแมงมุมจริง'],
+  ['B075','แม่มดผมกลืน',4,'ผมของเธอยาวจนกลายเป็นปาก กลืนกินทุกอย่างที่เข้าใกล้'],
+  ['B076','ลิฟต์ตัวที่สี่',5,'ลิฟต์ที่ไม่เคยถูกเปิดใช้ แต่มีมือนับสิบตบประตูจากข้างในทุกคืน'],
+  ['B077','ร่างขาแมงมุม',4,'ขายาวผิดธรรมชาติหลายขาค้ำร่างที่ห้อยหัวลงมา'],
+  ['B079','ผีผ้าห่ม',1,'ผ้าห่มของเด็กที่กลายเป็นผี ดวงตากลมโตดูน่ารักจนกว่ามันจะยิ้ม'],
+  ['B080','สาวผ้าคลุมตาเศร้า',1,'มองทุกคนด้วยดวงตาเศร้า เธอแค่อยากให้มีคนจำชื่อเธอได้'],
+  ['B081','ดอกตาบาน',4,'ดอกไม้ที่มีลูกตาเป็นเกสร บานเมื่อมีคนมองมัน'],
+  ['B083','ผู้ขึ้นมาจากอ่างอาบน้ำ',3,'ผมยาวเปียกโชกปิดทั้งตัว ทิ้งรอยน้ำไว้ตามพื้นทุกที่ที่ผ่าน'],
+  ['B084','เสาวิญญาณ',2,'ร่างยาวเหมือนเสาที่ยืนนิ่งกลางทางเดิน ไม่มีใครเห็นมันขยับ แต่มันไม่เคยอยู่ที่เดิม'],
+  ['B086','สูทของผู้จัดการ',3,'ชุดสูทที่เดินได้เองโดยไม่มีคนสวมใส่ ยังตรวจความเรียบร้อยของโรงแรมทุกคืน'],
+  ['B087','สองพี่น้องห้องเกม',2,'เด็กชายสองคนที่ติดอยู่ในห้องเกมของโรงแรม ชวนคุณเล่นเกมที่ไม่มีวันจบ'],
+  ['B088','เด็กปากในอก',4,'เด็กที่มีปากอยู่ตรงกลางอก มันพูดในสิ่งที่เด็กไม่กล้าพูด'],
+  ['B089','ม่านห้องอาบน้ำ',3,'ผ้าม่านห้องอาบน้ำที่มีรอยเงาของใครบางคนยืนอยู่ข้างหลังเสมอ'],
+  ['B090','เจ้าสาวผ้าคลุม',2,'เจ้าสาวในผ้าคลุมขาวที่เดินวนหาห้องหอที่ไม่มีอยู่จริง'],
+  ['B091','ผู้ไหลตามผนัง',4,'ร่างเหลวที่มีผมเหมือนหนวด ไหลไปตามผนังเหมือนคราบน้ำ'],
+  ['B092','แมงมุมหน้าคน',5,'แมงมุมยักษ์ที่มีใบหน้ามนุษย์ ใบหน้านั้นเคยเป็นแขกคนหนึ่งของโรงแรม'],
+  ['B093','สิ่งคลานจากช่องลม',4,'คลานออกมาจากช่องระบายอากาศ ตาโหลลึกและแขนยาวเกินร่าง'],
+  ['B094','ร่างรังหนอน',5,'ร่างกายที่กลายเป็นรังของบางสิ่ง รูทุกรูมีอะไรมองออกมา'],
+  ['B097','ผู้เฝ้าตาเดียว',4,'มีตาดวงเดียวกลางลำตัว คอยเฝ้าประตูหนีไฟไม่ให้ใครผ่าน'],
+  ['B099','แมงกะพรุนเพดาน',5,'ลอยอยู่ใต้เพดาน หนวดยาวห้อยลงมาแตะหัวแขกที่เดินผ่านโดยไม่รู้ตัว'],
+  ['B101','หน้าพระจันทร์ยิ้ม',4,'หน้ากลมเหมือนพระจันทร์เต็มดวงที่ยิ้มด้วยฟันแหลม ปรากฏเฉพาะคืนพระจันทร์เต็มดวง'],
+  ['B104','นางรำห้องบอลรูม',2,'นางรำชุดไทยที่ร่ายรำในห้องบอลรูมทุกคืน ดนตรีที่เธอฟังมีแต่เธอได้ยิน'],
+  ['B105','รังผมห้อยหัว',5,'ก้อนผมขนาดใหญ่ที่ห้อยลงจากเพดาน ข้างในมีอะไรบางอย่างกำลังหายใจ'],
+  ['B108','ผู้กลืนกับเงาของมัน',5,'สิ่งที่มีปากใหญ่เดินคู่กับเงาของตัวเอง เงานั้นเป็นคนเลือกเหยื่อ']
+].map(([id, name, tier, desc], i) => ({ id, no: i + 1, name, tier, desc }));
+const GHOST = id => GHOSTS.find(g => g.id === id);
+const GHOST_RECTS = {"A00":[9,4,161,196],"A01":[185,4,169,196],"A02":[375,4,150,196],"A03":[551,4,157,196],"A04":[739,4,142,196],"A05":[902,8,176,192],"A06":[1100,4,140,196],"A07":[1276,4,147,196],"A08":[1443,4,173,196],"A09":[1635,4,150,196],"A10":[1825,4,129,196],"A11":[1993,4,154,196],"A12":[25,204,130,196],"A13":[196,204,148,196],"A14":[390,204,119,196],"A15":[559,204,141,196],"A16":[743,204,133,196],"A17":[915,204,150,196],"A18":[1088,204,163,196],"A19":[1282,204,136,196],"A20":[1467,204,125,196],"A21":[1622,209,176,191],"A22":[1802,227,176,173],"A23":[2007,204,126,196],"A24":[22,404,135,196],"A25":[198,404,144,196],"A26":[378,404,144,196],"A27":[554,404,152,196],"A28":[741,404,138,196],"A29":[902,443,176,157],"A30":[1082,425,176,175],"A31":[1264,404,172,196],"A32":[1448,404,164,196],"A33":[1657,404,105,196],"A34":[1815,404,149,196],"A35":[2007,404,125,196],"A36":[4,604,172,196],"A37":[193,604,154,196],"A38":[388,604,123,196],"A39":[553,604,154,196],"A40":[731,604,157,196],"A41":[902,619,176,181],"A42":[1106,604,128,196],"A43":[1262,611,176,189],"A44":[1461,604,137,196],"A45":[1645,604,129,196],"A46":[1847,604,85,196],"A47":[2012,604,115,196],"A48":[13,804,154,196],"A49":[192,804,155,196],"A50":[362,846,176,154],"B001":[554,804,151,196],"B002":[731,804,157,196],"B003":[905,804,170,196],"B005":[1086,804,167,196],"B006":[1262,813,176,187],"B007":[1442,816,176,184],"B008":[1622,811,176,189],"B009":[1829,804,122,196],"B010":[2018,804,104,196],"B011":[2,1059,176,141],"B012":[188,1004,164,196],"B014":[392,1004,115,196],"B015":[566,1004,128,196],"B016":[741,1004,137,196],"B017":[921,1004,138,196],"B018":[1106,1004,128,196],"B019":[1285,1004,130,196],"B023":[1451,1004,158,196],"B024":[1635,1004,150,196],"B025":[1802,1008,176,192],"B028":[1986,1004,168,196],"B031":[28,1204,123,196],"B032":[218,1204,103,196],"B033":[397,1204,105,196],"B034":[557,1204,145,196],"B035":[744,1204,131,196],"B036":[926,1204,127,196],"B037":[1119,1204,102,196],"B038":[1283,1204,134,196],"B039":[1448,1204,163,196],"B040":[1632,1204,156,196],"B043":[1824,1204,131,196],"B044":[1989,1204,161,196],"B045":[2,1414,176,186],"B046":[196,1404,148,196],"B047":[368,1404,163,196],"B048":[550,1404,159,196],"B051":[739,1404,142,196],"B052":[902,1409,176,191],"B053":[1112,1404,115,196],"B054":[1271,1404,158,196],"B056":[1469,1404,121,196],"B059":[1641,1404,138,196],"B060":[1831,1404,118,196],"B061":[2028,1404,84,196],"B062":[10,1604,159,196],"B063":[202,1604,136,196],"B065":[378,1604,143,196],"B066":[559,1604,142,196],"B067":[739,1604,141,196],"B070":[920,1604,139,196],"B071":[1110,1604,120,196],"B073":[1285,1604,129,196],"B074":[1456,1604,148,196],"B075":[1630,1604,160,196],"B076":[1808,1604,163,196],"B077":[1982,1619,176,181],"B079":[25,1804,130,196],"B080":[203,1804,134,196],"B081":[384,1804,132,196],"B083":[561,1804,137,196],"B084":[760,1804,99,196],"B086":[909,1804,162,196],"B087":[1082,1836,176,164],"B088":[1296,1804,108,196],"B089":[1471,1804,117,196],"B090":[1631,1804,158,196],"B091":[1826,1804,128,196],"B092":[1992,1804,156,196],"B093":[2,2007,176,193],"B094":[212,2004,115,196],"B097":[409,2004,82,196],"B099":[573,2004,114,196],"B101":[747,2004,125,196],"B104":[945,2004,89,196],"B105":[1122,2004,95,196],"B108":[1267,2004,166,196]};
+const JUMP_FACES = ['A01', 'A07', 'A13', 'A14', 'A15', 'A18', 'A19', 'A34', 'A39', 'A42', 'A48', 'A50', 'B002', 'B019', 'B033', 'B045', 'B062', 'B101'];
+const TIER_ZONE = ['', 'ชั้น 50–41', 'ชั้น 40–31', 'ชั้น 30–21', 'ชั้น 20–11', 'ชั้น 10–1'];
+const TIER_NAME = ['', 'วิญญาณเร่ร่อน', 'วิญญาณอาฆาต', 'ปีศาจ', 'ปีศาจร้าย', 'มหันตภัย'];
+
+/* =========================================================
+   ANOMALIES  (GDD §5.3 / §5.4)
+   each apply() changes the floor and marks the thing a talisman must be stuck on (anom = 1)
+   ========================================================= */
+const ROOF = 51;
+const CHECKPOINTS = [40, 30, 20];            // save points
+const REST_FLOORS = [40, 30, 20, 10];         // talismans refilled here
+const isCheckpoint = f => CHECKPOINTS.includes(f);
+const isSafeFloor = f => f === 50 || REST_FLOORS.includes(f);
+const sectionStart = f => f > 40 ? 50 : f > 30 ? 40 : f > 20 ? 30 : 20;
+const TINT_RED = 'sepia(1) saturate(7) hue-rotate(-45deg) brightness(.85)';
+function randObj(fl, r, filt) { const c = fl.objs.filter(o => !o.fx && (!filt || filt(o))); return c.length ? pick(r, c) : null; }
+function emptySlot(fl, kind, r) {
+  const used = new Set(fl.objs.filter(o => o.kind === kind && o.slot != null).map(o => o.slot));
+  const free = SLOTS[kind].map((_, i) => i).filter(i => !used.has(i));
+  return free.length ? pick(r, free) : null;
+}
+function addFx(fl, o) { const f = Object.assign({ fx: true, kind: 'fx', z: 7, anom: 1 }, o); fl.objs.push(f); return f; }
+function ghostFor(zone, r, minTier = 1) {
+  const pool = GHOSTS.filter(g => g.tier <= zone + 2 && g.tier >= Math.max(minTier, zone - 1));
+  return pick(r, pool.length ? pool : GHOSTS);
+}
+function addGhost(fl, r, o, minTier) {
+  const g = ghostFor(fl.zone, r, minTier); fl.gid = g.id;
+  return addFx(fl, Object.assign({ sprite: 'g_' + g.id, name: '???', ghost: 1, gid: g.id, cls: 'ghostfx' }, o));
+}
+const PAINTINGS = ['f_paint1', 'f_paint2', 'f_paint_flower', 'f_paint_family', 'f_mirror', 'f_mirror2', 'f_hotelsign'];
+
+const ANOMALIES = [
+  // ---- LEVEL 1 : easy
+  { id: 'red', lvl: 1, type: 'Color', name: 'สิ่งของเปลี่ยนเป็นสีแดง', apply(fl, r) { const o = randObj(fl, r); if (!o) return 0; o.filter = TINT_RED; o.anom = 1; return 1; } },
+  { id: 'giant', lvl: 1, type: 'Shape', name: 'สิ่งของมีขนาดใหญ่ผิดปกติ', apply(fl, r) { const o = randObj(fl, r, o => o.kind === 'floor' || o.kind === 'mid'); if (!o) return 0; o.sc = 1.75; o.anom = 1; return 1; } },
+  { id: 'upside', lvl: 1, type: 'Shape', name: 'สิ่งของกลับหัว', apply(fl, r) { const o = randObj(fl, r, o => o.kind !== 'ceil'); if (!o) return 0; o.rot = 180; o.anom = 1; return 1; } },
+  { id: 'toy', lvl: 1, type: 'Object', name: 'มีตุ๊กตาที่ไม่ควรอยู่ในชั้นนี้', apply(fl, r) { const s = emptySlot(fl, 'floor', r); if (s == null) return 0; fl.objs.push({ id: 'toy', name: 'ตุ๊กตาปริศนา', sprite: pick(r, ['h_teddy', 'h_bunny', 'h_doll', 'h_voodoo']), kind: 'floor', slot: s, h: 115, extra: 1, anom: 1 }); return 1; } },
+  { id: 'handwall', lvl: 1, type: 'Environmental', name: 'รอยมือสีดำบนผนัง', apply(fl, r) { addFx(fl, { sprite: pick(r, ['h_handprint', 'h_splatter']), x: pick(r, DOORX), y: 560, h: 120, name: 'รอยประหลาด' }); return 1; } },
+  // ---- LEVEL 2 : medium
+  { id: 'apparition', lvl: 2, type: 'Supernatural', name: 'วิญญาณยืนอยู่ข้างผนัง', apply(fl, r) { addGhost(fl, r, { x: pick(r, GAPX), y: 590, h: 215, op: .9, z: 5 }); return 1; } },
+  { id: 'missing', lvl: 2, type: 'Object', name: 'สิ่งของบางชิ้นหายไป', apply(fl, r) { const o = randObj(fl, r, o => o.kind !== 'ceil'); if (!o) return 0; fl.objs.splice(fl.objs.indexOf(o), 1); fl.removed = o; return 1; } },
+  { id: 'dup', lvl: 2, type: 'Object', name: 'มีสิ่งของซ้ำกันอย่างผิดปกติ', apply(fl, r) { const o = randObj(fl, r, o => o.kind === 'floor' || o.kind === 'mid' || o.kind === 'hi'); if (!o) return 0; const s = emptySlot(fl, o.kind, r); if (s == null) return 0; fl.objs.push(Object.assign({}, o, { slot: s, extra: 1, anom: 1 })); return 1; } },
+  { id: 'stretch', lvl: 2, type: 'Shape', name: 'สิ่งของยืดและบิดเบี้ยว', apply(fl, r) { const o = randObj(fl, r, o => o.kind !== 'ceil'); if (!o) return 0; o.sy = 1.55; o.sx = .7; o.skew = 9; o.anom = 1; return 1; } },
+  { id: 'tilt', lvl: 2, type: 'Shape', name: 'สิ่งของเอียงผิดธรรมชาติ', apply(fl, r) { const o = randObj(fl, r, o => o.kind !== 'ceil'); if (!o) return 0; o.rot = r() < .5 ? 32 : -32; o.anom = 1; return 1; } },
+  { id: 'paintswap', lvl: 2, type: 'Supernatural', name: 'ภาพบนผนังกลายเป็นภาพบุคคล', apply(fl, r) { const o = randObj(fl, r, o => PAINTINGS.includes(o.sprite)); if (!o) return 0; o.sprite = pick(r, ['f_paint_woman', 'h_mirror_face', 'h_window_hand']); o.anom = 1; return 1; } },
+  { id: 'doorblood', lvl: 2, type: 'Shape', name: 'ประตูห้องเปลี่ยนสภาพ', apply(fl, r) { const d = pick(r, fl.doors); d.sprite = pick(r, ['h_door_metal', 'h_door_hands']); d.anom = 1; return 1; } },
+  { id: 'signwrong', lvl: 2, type: 'Environmental', name: 'ป้ายบอกชั้นแสดงเลขผิด', apply(fl, r) { if (fl.f <= 2) return 0; fl.signDown = '▼ ' + pick(r, [fl.f + 1, fl.f, 44, 13, 4, 66].filter(n => n !== fl.f - 1)) + 'F'; fl.signAnom = 1; return 1; } },
+  { id: 'cracks', lvl: 2, type: 'Environmental', name: 'ผนังมีรอยแตกใหม่', apply(fl, r) { addFx(fl, { sprite: pick(r, ['p_crackhole', 'p_crack1', 'p_crack2']), x: pick(r, GAPX), y: 470, h: 170, name: 'รอยแตก' }); return 1; } },
+  { id: 'ink', lvl: 2, type: 'Environmental', name: 'คราบของเหลวสีดำบนพื้น', apply(fl, r) { addFx(fl, { sprite: 'p_ink', x: pick(r, SLOTS.floor), y: 742, h: 52, name: 'คราบดำ', z: 5 }); return 1; } },
+  { id: 'jar', lvl: 2, type: 'Object', name: 'วัตถุพิธีกรรมปรากฏขึ้น', apply(fl, r) { const s = emptySlot(fl, 'floor', r); if (s == null) return 0; fl.objs.push({ id: 'ritual', name: 'วัตถุปริศนา', sprite: pick(r, ['h_skulljar', 'h_cage', 'h_music_box', 'h_gramophone', 'h_spirit_house', 'h_candles']), kind: 'floor', slot: s, h: 120, extra: 1, anom: 1 }); return 1; } },
+  // ---- LEVEL 3 : hard
+  { id: 'faint', lvl: 3, type: 'Supernatural', name: 'เงาวิญญาณจาง ๆ ซ้อนอยู่กับผนัง', apply(fl, r) { addGhost(fl, r, { x: pick(r, DOORX.concat(GAPX)), y: 580, h: 230, op: .2, z: 4 }); return 1; } },
+  { id: 'ceilghost', lvl: 3, type: 'Supernatural', name: 'มีสิ่งห้อยหัวอยู่ใต้เพดาน', apply(fl, r) { addGhost(fl, r, { x: pick(r, GAPX), y: 205, h: 140, op: .75, rot: 180, z: 6 }); return 1; } },
+  { id: 'platewrong', lvl: 3, type: 'Environmental', name: 'เลขห้องผิดจากชั้นจริง', apply(fl, r) { const i = Math.floor(r() * 5); const n = fl.plates[i]; fl.plates[i] = pick(r, [String(fl.f + 1).padStart(2, '0') + '0' + (i + 1), '4444', String(fl.f).padStart(2, '0') + '13', String(fl.f).padStart(2, '0') + '0' + (i + 1)].filter(x => x !== n)); fl.plateAnom = i; return 1; } },
+  { id: 'shadow', lvl: 3, type: 'Supernatural', name: 'เงาดำปรากฏในที่ที่ไม่มีวัตถุ', apply(fl, r) { addFx(fl, { sprite: 'h_shadow_man', x: pick(r, GAPX), y: 600, h: 250, op: .33, name: 'เงา', z: 3 }); return 1; } },
+  { id: 'eyes', lvl: 3, type: 'Supernatural', name: 'ดวงตาบนผนัง', apply(fl, r) { addFx(fl, { sprite: 'h_shadow_eyes', x: pick(r, DOORX), y: 300, h: 120, op: .5, name: 'ดวงตา', z: 3 }); return 1; } },
+  { id: 'mirrorfig', lvl: 3, type: 'Supernatural', name: 'มีเงาคนอยู่ในกระจก', apply(fl, r) { const o = randObj(fl, r, o => o.sprite === 'f_mirror' || o.sprite === 'f_mirror2'); if (!o) return 0; o.sprite = o.sprite === 'f_mirror' ? 'h_mirror_oval' : 'h_mirror_shadow'; o.anom = 1; return 1; } },
+  { id: 'sneak', lvl: 3, type: 'Behavior', name: 'สิ่งของขยับเองเมื่อคุณหันหลัง', apply(fl, r) { const o = randObj(fl, r, o => o.kind === 'floor'); if (!o) return 0; o.beh = 'sneak'; o.anom = 1; return 1; } },
+  { id: 'doorbreath', lvl: 3, type: 'Behavior', name: 'ประตูเปิดและปิดเอง', apply(fl, r) { const d = pick(r, fl.doors); d.beh = 'breath'; d.anom = 1; return 1; } },
+  { id: 'flicker', lvl: 3, type: 'Environmental', name: 'แสงไฟกะพริบผิดจังหวะ', apply(fl) { fl.flicker = true; fl.objs.filter(o => o.kind === 'ceil').forEach(o => o.anom = 1); return 1; } },
+  { id: 'portraitturn', lvl: 3, type: 'Behavior', name: 'ภาพเปลี่ยนเมื่อคุณหันหลังให้', apply(fl, r) { const o = randObj(fl, r, o => ['f_paint1', 'f_paint2', 'f_paint_flower', 'f_paint_family'].includes(o.sprite)); if (!o) return 0; o.beh = 'turn'; o.alt = 'f_paint_woman'; o.anom = 1; return 1; } },
+  { id: 'extradoor', lvl: 3, type: 'Supernatural', name: 'มีประตูบานที่หกที่ไม่ควรมี', apply(fl, r) { const gi = Math.floor(r() * 4); fl.objs = fl.objs.filter(o => !(o.kind === 'mid' && o.slot === gi)); fl.doors.push({ x: GAPX[gi], sprite: 'f_door', w: 70, h: 210, extra: 1, anom: 1 }); return 1; } },
+  { id: 'footprints', lvl: 3, type: 'Environmental', name: 'รอยเท้าเดินหายเข้าไปในผนัง', apply(fl, r) { const x0 = pick(r, GAPX); for (let i = 0; i < 4; i++) addFx(fl, { sprite: i % 2 ? 'h_foot1' : 'h_foot2', x: x0 - 70 + i * 34, y: 748 - i * 9, h: 30, op: .8, name: 'รอยเท้า', z: 5 }); return 1; } },
+  { id: 'flip', lvl: 3, type: 'Shape', name: 'สิ่งของหันกลับด้าน', apply(fl, r) { const o = randObj(fl, r, o => ['floor', 'mid', 'hi'].includes(o.kind)); if (!o) return 0; o.flip = !o.flip; o.anom = 1; return 1; } },
+  { id: 'faded', lvl: 3, type: 'Color', name: 'สิ่งของซีดจางเหมือนวิญญาณ', apply(fl, r) { const o = randObj(fl, r); if (!o) return 0; o.op = .35; o.anom = 1; return 1; } },
+  // ---- LEVEL 4 : dangerous — walking past = death
+  { id: 'stalker', lvl: 4, type: 'Supernatural', name: 'วิญญาณกำลังเดินเข้ามาหาคุณ', stalk: 1, death: 'มันเดินเข้ามาช้า ๆ ... และคุณรอนานเกินไป', apply(fl, r) { addGhost(fl, r, { x: 1390, y: 610, h: 250, op: .95, z: 9, beh: 'stalk', speed: 45 + fl.zone * 12 }, 3); return 1; } },
+  { id: 'endghost', lvl: 4, type: 'Supernatural', name: 'มีบางสิ่งยืนหันหลังอยู่ปลายทางเดิน', death: 'สิ่งที่ยืนหันหลังอยู่ปลายทางเดินหันกลับมา... มันยิ้ม', apply(fl, r) { fl.gid = ghostFor(fl.zone, r, 3).id; addFx(fl, { sprite: 'h_g_back', x: 1395, y: 640, h: 250, name: '???', z: 8, ghost: 1 }); return 1; } },
+  { id: 'crawler', lvl: 4, type: 'Supernatural', name: 'มีสิ่งมีชีวิตเกาะอยู่บนเพดาน', death: 'มันหล่นลงมาจากเพดานอย่างเงียบเชียบ ตรงหลังคอของคุณ', apply(fl, r) { fl.gid = 'A29'; addFx(fl, { sprite: 'h_crawler', x: pick(r, GAPX), y: 175, h: 150, rot: 180, op: .92, name: '???', z: 6, ghost: 1 }); return 1; } },
+  { id: 'hands', lvl: 4, type: 'Supernatural', name: 'มือปริศนาโผล่ออกมาจากผนัง', death: 'มือนับสิบคว้าข้อเท้าคุณ แล้วดึงเข้าไปในผนัง', apply(fl, r) { fl.gid = 'B076'; addFx(fl, { sprite: 'h_hands_hole', x: pick(r, GAPX), y: 540, h: 190, name: '???', z: 4, ghost: 1 }); return 1; } },
+  { id: 'dooropen', lvl: 4, type: 'Supernatural', name: 'ประตูเปิดอ้าและมีมือยื่นออกมา', death: 'ประตูที่เปิดค้างไว้ไม่ได้รอแขก — มันรอเหยื่อ', apply(fl, r) { const d = pick(r, fl.doors.filter(d => !d.extra)); d.sprite = 'h_door_open'; d.ghost = 1; d.anom = 1; fl.gid = 'A45'; return 1; } },
+  { id: 'bigghost', lvl: 4, type: 'Supernatural', name: 'ปีศาจลอยอยู่กลางทางเดิน', death: 'ปีศาจตัวนั้นไม่ได้ลอยอยู่เฉย ๆ — มันรอให้คุณเดินผ่าน', apply(fl, r) { const s = emptySlot(fl, 'floor', r); if (s == null) return 0; addGhost(fl, r, { x: SLOTS.floor[s], y: 600, h: 260, op: .95, z: 8 }, 4); return 1; } }
+];
+const ZONE_LEVELS = [{ 1: 1, 2: .4 }, { 1: .5, 2: 1, 3: .5 }, { 1: .25, 2: .8, 3: 1, 4: .3 }, { 2: .6, 3: 1, 4: .55 }, { 2: .4, 3: 1, 4: .8 }];
+const ANOM_P = [.4, .45, .5, .56, .62];
+const HUNT_P = [0, .1, .14, .22, .3];
+const ITEMS = {
+  talisman: { name: 'ผ้ายันต์', sprite: 'it_talisman', desc: 'ยันต์เพิ่ม 1 ผืน' },
+  incense: { name: 'ธูปหอม', sprite: 'it_incense', desc: 'Heart Rate −20%' },
+  charm: { name: 'พระเครื่อง', sprite: 'it_charm', desc: 'กันการถูกหลอนส่งกลับ 1 ครั้ง' },
+  bell: { name: 'กระดิ่งเรียกวิญญาณ', sprite: 'it_bell', desc: 'สั่นเมื่อชั้นนั้นมีสิ่งผิดปกติ [B]' }
+};
+
+/* =========================================================
+   STORY
+   ========================================================= */
+const LORE = {
+  40: ['สมุดบันทึกพนักงานยกกระเป๋า · 12 ต.ค. 1999', '"แขกห้อง 4003 ร้องเรียนว่าทางเดินยาวขึ้นทุกคืน และภาพวาดในโถงหันหน้ามามองเขา\n\nเช้านี้ห้อง 4003 ว่างเปล่า... แต่มีเก้าอี้ตัวใหม่วางอยู่หน้าประตู เก้าอี้ที่ผมไม่เคยเห็นมาก่อน\n\nป.ล. ยันต์ที่หลวงพ่อให้มา ผมแปะไว้ที่เก้าอี้ตัวนั้นแล้ว มันหยุดขยับ"'],
+  30: ['รูปโพลารอยด์ที่ตกอยู่บนพื้น', 'เป็นรูปพวกเราหกคนบนดาดฟ้า ถ่ายจากกล้องของมิระตอนเที่ยงวัน\n\nทุกคนยิ้มชูผ้ายันต์ให้กล้อง... แต่ข้างหลังพวกเรามีคนที่เจ็ดยืนอยู่ ใส่ชุดพนักงานโรงแรม และไม่มีใบหน้า\n\nด้านหลังรูปมีลายมือเขียนว่า "ยินดีต้อนรับ"'],
+  20: ['ประกาศจากผู้จัดการโรงแรม', '"GRAND HOTEL ไม่เคยทอดทิ้งแขกของเรา\nแขกที่ไม่สังเกต จะได้พักกับเราตลอดไป — ในฐานะส่วนหนึ่งของการตกแต่ง"\n\nนี่คือจุดบันทึกสุดท้าย ชั้นข้างล่างไม่มีที่ปลอดภัยอีกแล้ว\nถ้าพลาดตั้งแต่นี้ไป... จะต้องกลับมาเริ่มที่นี่'],
+  10: ['ศาลพักใจ · เสียงจากหลังประตูห้อง 1003', '"...ได้ยินพวกเรามั้ย? เราติดอยู่ในนี้ ผ้ายันต์ของพวกเราวางไว้ที่ศาลให้แล้ว เอาไปใช้\nอย่าหยุดเดิน อย่าเปิดประตูมาหาเรา\nออกไปให้ได้ก่อน... แล้วค่อยกลับมาช่วยพวกเรา"\n\nนั่นมันเสียงของเพื่อน ๆ — ที่นี่ไม่มีการบันทึก แต่ยันต์ถูกเติมจนครบ']
+};
+const THOUGHTS = {
+  calm: ['ทางเดินเหมือนเดิม... หรือเปล่านะ', 'เสียงแอร์ดังหึ่ง ๆ อยู่ตลอดเวลา', 'ค่อย ๆ ดูให้ทั่วก่อนตัดสินใจ', 'กลิ่นฝุ่นกับพรมเก่าลอยมา', 'ดูเหมือนทุกอย่างปกติดี... มั้ง'],
+  nervous: ['เมื่อกี้มีเสียงอะไรหรือเปล่า', 'ใจเย็นไว้... ดูทีละอย่าง', 'ทำไมรู้สึกเหมือนมีคนมองอยู่', 'ไฟดวงนั้นเพิ่งกะพริบใช่มั้ย', 'ไม่มีอะไรหรอก... ใช่มั้ย'],
+  afraid: ['ไม่ไหวแล้ว... ขาสั่นไปหมด', 'อย่าหันไปมอง... แต่ต้องมอง', 'ได้ยินเสียงฝีเท้าตามหลังมา', 'ทุกห้องเงียบเกินไป', 'ประตูห้องนั้นขยับหรือเปล่า'],
+  panic: ['หายใจไม่ออก!', 'ต้องออกไปจากที่นี่ ต้องออกไป!', 'มันอยู่ใกล้ ๆ นี่แหละ', 'หัวใจจะระเบิดแล้ว', 'ทุกอย่างผิดไปหมด!!'],
+};
+// fake-outs: harmless lines/sounds that make normal floors feel wrong
+const DECOY_LINES = ['เมื่อกี้... ประตูห้องนั้นขยับหรือเปล่า?', 'ได้ยินเสียงเคาะมาจากข้างใน', 'ใครหัวเราะน่ะ?!', 'มีเงาวิ่งผ่านบันไดไปเมื่อกี้', 'กลิ่นธูปลอยมาจากไหน...', 'อย่ามาเล่นแบบนี้นะ... ทุกคน?', 'รู้สึกเหมือนภาพนั้นมองตามมา', 'เสียงฝีเท้า... ข้างหลัง'];
+const DAY = 'brightness(1.5) sepia(.45) contrast(.85)', DUSK = 'brightness(.8) sepia(.7) contrast(1.1)', NIGHT = 'brightness(.55)';
+const PROLOGUE = c => [
+  { bg: 'bg_roof', filter: DAY, actors: 'lineup', text: ((Store.get('tlf_loops') || 0) ? '[ ลูปที่ ' + ((Store.get('tlf_loops') || 0) + 1) + ' ]  ' : '') + 'เที่ยงวันตรง — หกเพื่อนจากชมรมสำรวจที่ร้างปีนขึ้นมาถึงดาดฟ้าชั้น 51 ของ GRAND HOTEL\nโรงแรมหรูที่ถูกปิดตายมานานกว่า 27 ปี' },
+  { text: 'ในเป้ของทุกคนมี "ผ้ายันต์" คนละ 4 ผืน ซื้อมาจากร้านเก่าหลังวัด ตามกระทู้ลึกลับที่ท้าไว้ว่า\nถ้าแปะยันต์ติดผีได้จริง ผีจะถูกสะกดไว้ในผ้า — ใครจับได้มากที่สุดคือผู้ชนะ' },
+  { speaker: 'REN', text: 'ผีมีจริงที่ไหนกัน! ยันต์พวกนี้ก็แค่กระดาษกับหมึกแดงเท่านั้นแหละ' },
+  { speaker: 'MIRA', text: 'งั้นก็พิสูจน์สิ ฉันจะถ่ายรูปเก็บไว้เป็นหลักฐานเอง' },
+  { filter: DUSK, text: 'พวกเขาเดินสำรวจ หัวเราะ และแปะยันต์เล่นตามประตูดาดฟ้า...\nจนแสงอาทิตย์ลับขอบฟ้า และไม่มีใครคิดจะกลับบ้าน' },
+  { filter: NIGHT, actors: 'sleepers', text: 'ห้านาทีก่อนเที่ยงคืน ทุกคนรู้สึกหนักหัวขึ้นพร้อมกัน\nแล้วล้มลงหมดสติไปทีละคน... Zzz' },
+  { actors: 'wakeall', sfx: 'whoosh', text: 'เที่ยงคืนตรง — ทุกคนสะดุ้งตื่นขึ้นพร้อมกัน\nราวกับมีใครกระชากวิญญาณกลับเข้าร่าง' },
+  { actors: 'scatter', sfx: 'door', filter: 'brightness(.35)', text: 'ประตูดาดฟ้าเปิดผางออกเอง ไฟฉายทุกกระบอกดับพร้อมกัน...\nเสียงฝีเท้าของเพื่อน ๆ วิ่งลงบันไดหายไปในความมืด' },
+  { filter: NIGHT, speaker: c.name, text: 'ทุกคน! รอด้วย!!\n...ทำไมไม่มีใครตอบเลย' },
+  { note: true, text: '(กฎที่ติดอยู่หลังประตูดาดฟ้า — นี่คือกติกาของเกม)' },
+  { speaker: c.name, text: c.line },
+  { text: 'ทางออกเดียวคือล็อบบี้ชั้น 1 — ห่างออกไป 50 ชั้น\nในเป้ของคุณเหลือผ้ายันต์ 4 ผืน... และคืนนี้ ผีมีจริง' }
+];
+const RULES_NOTE = '<h3>กฎสำหรับแขกของ GRAND HOTEL</h3>1. ทุกชั้นในโซนเดียวกันหน้าตาเหมือนกัน จงจำให้ดี\n2. ทุกอย่างปกติ — ลง<b>บันไดฝั่งขวา</b>\n3. มีสิ่งผิดปกติ — ขึ้น<b>บันไดฝั่งซ้าย</b> หรือ<b>แปะยันต์</b>ผนึกมันให้ถูกตัว\n4. ยันต์ที่แปะผิดจะปลุกสิ่งที่หลับอยู่ — ห้ามเดินหน้าต่อ\n5. ถ้ามีสิ่งใดเดินเข้ามาหา — อย่ารอ วิ่ง!\n6. ผู้ถูกหลอกหลอนจะถูกส่งกลับจุดเริ่มต้นของส่วนนั้น\n7. อย่าวิ่งหนีโดยไม่มีเหตุผล โรงแรมเกลียดแขกขี้ขลาด\n8. ของขลังที่เรืองแสงสีทองไม่ใช่สิ่งผิดปกติ — เก็บไว้\n<div style="text-align:right;margin-top:6px">— ผู้จัดการ</div>';
+
+
+/* =========================================================
+   SETTINGS
+   ========================================================= */
+const DEFAULT_SET = { master: .8, music: .6, sfx: .8, ambient: .6, shake: true, vfx: true, hrfx: true, anomfx: true, textSpeed: 'normal', display: 'fit' };
+let SET = Object.assign({}, DEFAULT_SET, Store.get('tlf_settings') || {});
+const saveSettings = () => Store.set('tlf_settings', SET);
+
+/* =========================================================
+   AUDIO (synthesised with WebAudio — no files needed)
+   ========================================================= */
+const Snd = {
+  ctx: null, bus: {}, mode: null, genT: 0, droneT: 0, drones: [], intensity: 0,
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+    const c = this.ctx;
+    const comp = c.createDynamicsCompressor(); comp.threshold.value = -10; comp.ratio.value = 6; comp.connect(c.destination);
+    const master = c.createGain(); master.connect(comp); this.bus.master = master;
+    ['music', 'sfx', 'ambient'].forEach(k => { const g = c.createGain(); g.connect(master); this.bus[k] = g; });
+    // generated impulse response reverb = big empty hotel
+    const len = c.sampleRate * 4.5, ir = c.createBuffer(2, len, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+    const verb = c.createConvolver(); verb.buffer = ir; const vg = c.createGain(); vg.gain.value = .9; verb.connect(vg); vg.connect(master);
+    this.verb = verb;
+    const nb = c.createBuffer(1, c.sampleRate * 3, c.sampleRate); const d = nb.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; this.noise = nb;
+    const curve = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 512 - 1; curve[i] = Math.tanh(x * 6); } this.dist = curve;
+    this.apply();
+    if (this.mode) { const m = this.mode; this.mode = null; this.setMode(m); }
+  },
+  apply() { if (!this.ctx) return; const t = this.ctx.currentTime; this.bus.master.gain.setTargetAtTime(SET.master, t, .05); this.bus.music.gain.setTargetAtTime(SET.music * .7, t, .05); this.bus.sfx.gain.setTargetAtTime(SET.sfx, t, .05); this.bus.ambient.gain.setTargetAtTime(SET.ambient * .8, t, .05); },
+  /* out(bus, wet): returns a node that feeds bus dry + reverb send, with random stereo pan */
+  out(bus = 'ambient', wet = .5, pan = null) {
+    const c = this.ctx, g = c.createGain(), p = c.createStereoPanner ? c.createStereoPanner() : null;
+    if (p) { p.pan.value = pan == null ? (Math.random() * 2 - 1) * .9 : pan; g.connect(p); p.connect(this.bus[bus]); } else g.connect(this.bus[bus]);
+    const s = c.createGain(); s.gain.value = wet; g.connect(s); s.connect(this.verb);
+    return g;
+  },
+  env(g, t, a, peak, dec) { g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + dec); },
+  tone(freq, dur, type = 'sine', vol = .3, dest = null, when = 0, attack = .01) {
+    if (!this.ctx) return; const c = this.ctx, t = c.currentTime + when; const o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t); o.connect(g); g.connect(dest || this.out('sfx', .25, 0)); this.env(g, t, attack, vol, dur); o.start(t); o.stop(t + attack + dur + .05); return o;
+  },
+  noiseHit(dur, freq, vol = .3, q = 1, when = 0, dest = null, type = 'bandpass', attack = .005) {
+    if (!this.ctx) return; const c = this.ctx, t = c.currentTime + when; const n = c.createBufferSource(); n.buffer = this.noise;
+    const f = c.createBiquadFilter(); f.type = type; f.frequency.setValueAtTime(freq, t); f.Q.value = q; const g = c.createGain();
+    n.connect(f); f.connect(g); g.connect(dest || this.out('sfx', .2, 0)); this.env(g, t, attack, vol, dur); n.start(t, Math.random() * 1.5); n.stop(t + attack + dur + .05); return f;
+  },
+  /* ---------- generative soundscape: never repeats the same way ---------- */
+  setMode(m) {
+    if (this.mode === m) return; this.mode = m;
+    if (!this.ctx) return;
+    this.drones.forEach(d => { d.g.gain.setTargetAtTime(0, this.ctx.currentTime, .8); setTimeout(() => d.nodes.forEach(n => { try { n.stop(); } catch (e) {} }), 4000); });
+    this.drones = []; this.genT = .5; this.droneT = 0;
+    if (!m) return;
+    const c = this.ctx, bus = m === 'menu' ? 'music' : 'ambient';
+    // 3 slowly drifting dissonant drone voices
+    for (let i = 0; i < 3; i++) {
+      const g = c.createGain(); g.gain.value = 0; g.gain.setTargetAtTime(.11, c.currentTime, 3);
+      const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 280 + i * 90; f.Q.value = 4; f.connect(g); g.connect(this.out(bus, .7, (i - 1) * .6));
+      const o1 = c.createOscillator(), o2 = c.createOscillator(); o1.type = 'sawtooth'; o2.type = 'triangle';
+      o1.frequency.value = 55; o2.frequency.value = 55.3; o1.connect(f); o2.connect(f); o1.start(); o2.start();
+      const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = .03 + Math.random() * .08; lg.gain.value = 120; lfo.connect(lg); lg.connect(f.frequency); lfo.start();
+      this.drones.push({ g, f, o1, o2, nodes: [o1, o2, lfo] });
+    }
+    // wind / building breath bed
+    const n = c.createBufferSource(); n.buffer = this.noise; n.loop = true; const nf = c.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 400; nf.Q.value = .8;
+    const ng = c.createGain(); ng.gain.value = 0; ng.gain.setTargetAtTime(m === 'menu' ? .08 : .05, c.currentTime, 2);
+    const wl = c.createOscillator(), wg = c.createGain(); wl.frequency.value = .06; wg.gain.value = 250; wl.connect(wg); wg.connect(nf.frequency); wl.start();
+    n.connect(nf); nf.connect(ng); ng.connect(this.out(bus, .6, 0)); n.start();
+    this.drones.push({ g: ng, nodes: [n, wl] });
+    this.retuneDrones(true);
+  },
+  retuneDrones(now) {
+    if (!this.ctx) return; const c = this.ctx, t = c.currentTime;
+    const roots = [36.7, 38.9, 41.2, 43.65, 46.25, 49];               // low D..G — shifting root
+    const sets = [[1, 1.06, 1.414], [1, 1.189, 1.414], [1, 1.5, 1.587], [1, 1.122, 1.682], [1, 1.335, 1.414], [1, .944, 1.5]];
+    const r = roots[Math.floor(Math.random() * roots.length)], s = sets[Math.floor(Math.random() * sets.length)];
+    this.drones.forEach((d, i) => {
+      if (!d.o1) return; const fr = r * s[i] * (i === 2 ? 2 : 1);
+      const glide = now ? .1 : 6 + Math.random() * 8;
+      d.o1.frequency.setTargetAtTime(fr, t, glide / 3); d.o2.frequency.setTargetAtTime(fr * (1.003 + Math.random() * .01), t, glide / 3);
+    });
+  },
+  tick(dt, intensity) {
+    if (!this.ctx || !this.mode) return;
+    this.intensity = intensity;
+    this.droneT -= dt; if (this.droneT <= 0) { this.droneT = 10 + Math.random() * 14; this.retuneDrones(); }
+    this.genT -= dt;
+    if (this.genT <= 0) {
+      const I = this.intensity;
+      this.genT = (this.mode === 'menu' ? 3.5 : 2.2) + Math.random() * (this.mode === 'menu' ? 6 : 5) * (1 - I * .6);
+      const pool = this.mode === 'menu'
+        ? ['musicbox', 'musicbox', 'metal', 'swell', 'creak', 'whisper']
+        : ['creak', 'knock', 'metal', 'musicbox', 'whisper', 'swell', 'drip', 'steps', 'creak', 'hum'].concat(I > .4 ? ['whisper', 'knock', 'scrape', 'steps'] : []).concat(I > .7 ? ['scrape', 'whisper', 'laugh'] : []);
+      this.event(pool[Math.floor(Math.random() * pool.length)]);
+    }
+  },
+  event(e) {
+    const c = this.ctx, bus = this.mode === 'menu' ? 'music' : 'ambient', R = Math.random;
+    switch (e) {
+      case 'musicbox': {   // detuned broken lullaby in a diminished scale
+        const sc = [0, 2, 3, 5, 6, 8, 9, 11], base = 440 * Math.pow(2, Math.floor(R() * 3) - 1), n = 3 + Math.floor(R() * 5), d = this.out(bus, .85);
+        let tt = 0; for (let i = 0; i < n; i++) { const st = sc[Math.floor(R() * sc.length)] + (R() < .3 ? 12 : 0); const f = base * Math.pow(2, st / 12) * (1 + (R() - .5) * .02); this.tone(f, 1.6, 'sine', .07, d, tt); this.tone(f * 3.01, .5, 'sine', .015, d, tt); tt += .28 + R() * .5 * (R() < .2 ? 3 : 1); }
+        break; }
+      case 'creak': { const f = this.noiseHit(1.2 + R(), 300 + R() * 300, .12, 25, 0, this.out(bus, .6)); if (f) f.frequency.exponentialRampToValueAtTime(150 + R() * 900, c.currentTime + 1.5); break; }
+      case 'knock': { const d = this.out(bus, .8), k = 2 + Math.floor(R() * 3); for (let i = 0; i < k; i++) { this.noiseHit(.12, 110, .5, 3, i * (.22 + R() * .1), d, 'lowpass'); this.tone(70, .15, 'sine', .25, d, i * (.22 + R() * .1)); } break; }
+      case 'metal': { const d = this.out(bus, .9), f = 120 + R() * 200; [1, 2.76, 5.4, 8.93].forEach((m, i) => this.tone(f * m, 3 + R() * 2, 'sine', .05 / (i + 1), d, 0, .002)); break; }
+      case 'whisper': { const d = this.out(bus, .5); const k = 4 + Math.floor(R() * 8); for (let i = 0; i < k; i++) this.noiseHit(.12 + R() * .2, 1800 + R() * 3500, .05 + this.intensity * .05, 5 + R() * 8, i * (.09 + R() * .12), d); break; }
+      case 'swell': { const d = this.out(bus, .9); const o = this.tone(60 + R() * 300, 3.5, R() < .5 ? 'sawtooth' : 'triangle', .07, d, 0, 3); if (o) o.frequency.linearRampToValueAtTime(o.frequency.value * (R() < .5 ? .7 : 1.4), c.currentTime + 6); this.noiseHit(.4, 900, .09, .5, 3, d, 'bandpass', 3); break; }
+      case 'drip': { const d = this.out(bus, .9); const k = 1 + Math.floor(R() * 3); for (let i = 0; i < k; i++) { const o = this.tone(1200 + R() * 900, .12, 'sine', .06, d, i * (.6 + R())); if (o) o.frequency.exponentialRampToValueAtTime(400, c.currentTime + i * 1.1 + .12); } break; }
+      case 'steps': { const d = this.out(bus, .85, (R() < .5 ? -1 : 1) * .8); const k = 3 + Math.floor(R() * 5), sp = .35 + R() * .25; for (let i = 0; i < k; i++) this.noiseHit(.07, 220 + R() * 100, .18 + i * .02, 2, i * sp, d); break; }
+      case 'hum': { const d = this.out(bus, .4); this.tone(50, 2.5, 'square', .025, d, 0, 1); this.tone(100, 2.5, 'sawtooth', .015, d, 0, 1); break; }
+      case 'scrape': { const f = this.noiseHit(1.8, 2500, .1, 12, 0, this.out(bus, .6), 'bandpass', .3); if (f) f.frequency.linearRampToValueAtTime(800 + R() * 3000, c.currentTime + 2); break; }
+      case 'laugh': { const d = this.out(bus, .9); const f0 = 500 + R() * 300; for (let i = 0; i < 5; i++) { const o = this.tone(f0 * (1 - i * .04), .12, 'triangle', .04, d, i * .18); } break; }
+    }
+  },
+  /* ---------- synthesized scream ---------- */
+  scream(dur = 2.2, vol = .9, pitch = 1) {
+    if (!this.ctx) return; const c = this.ctx, t = c.currentTime, R = Math.random;
+    const d = this.out('sfx', .45, 0);
+    const out = c.createGain(); out.connect(d);
+    out.gain.setValueAtTime(0.0001, t); out.gain.exponentialRampToValueAtTime(vol, t + .04); out.gain.setValueAtTime(vol, t + dur - .5); out.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    const ws = c.createWaveShaper(); ws.curve = this.dist; ws.oversample = '4x';
+    const pre = c.createGain(); pre.gain.value = .5; pre.connect(ws);
+    // formants ("AAAH" sliding toward "EEEE")
+    [[850, 300, 6, 1], [1250, 2250, 7, .7], [2900, 3100, 9, .45], [3600, 3800, 10, .25]].forEach(([a, b, q, gn]) => {
+      const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.setValueAtTime(a, t); f.frequency.linearRampToValueAtTime(b, t + dur * .8); f.Q.value = q;
+      const g = c.createGain(); g.gain.value = gn * 2.2; ws.connect(f); f.connect(g); g.connect(out);
+    });
+    const f0 = (380 + R() * 80) * pitch;
+    const vib = c.createOscillator(), vg = c.createGain(); vib.frequency.value = 6 + R() * 3; vg.gain.value = 0; vg.gain.linearRampToValueAtTime(f0 * .06, t + .4); vib.connect(vg); vib.start(t); vib.stop(t + dur);
+    const jit = c.createBufferSource(); jit.buffer = this.noise; const jf = c.createBiquadFilter(); jf.type = 'lowpass'; jf.frequency.value = 30; const jg = c.createGain(); jg.gain.value = f0 * .08; jit.connect(jf); jf.connect(jg); jit.start(t); jit.stop(t + dur);
+    [0, -9, 13].forEach(det => {
+      const o = c.createOscillator(); o.type = 'sawtooth'; o.detune.value = det;
+      o.frequency.setValueAtTime(f0 * .7, t); o.frequency.exponentialRampToValueAtTime(f0 * 2.2, t + .18); o.frequency.exponentialRampToValueAtTime(f0 * 2.0, t + dur * .6); o.frequency.exponentialRampToValueAtTime(f0 * 1.3, t + dur);
+      vg.connect(o.frequency); jg.connect(o.frequency); o.connect(pre); o.start(t); o.stop(t + dur + .05);
+    });
+    // breath / rasp
+    const n = c.createBufferSource(); n.buffer = this.noise; const nh = c.createBiquadFilter(); nh.type = 'highpass'; nh.frequency.value = 1800; const ng = c.createGain(); ng.gain.value = .35;
+    n.connect(nh); nh.connect(ng); ng.connect(out); n.start(t); n.stop(t + dur);
+  },
+  sfx(name) {
+    if (!this.ctx) return; const R = Math.random;
+    switch (name) {
+      case 'click': this.tone(900, .05, 'square', .05); break;
+      case 'hover': this.tone(1400, .03, 'sine', .025); break;
+      case 'confirm': this.tone(523, .12, 'triangle', .15); this.tone(784, .2, 'triangle', .12, null, .08); break;
+      case 'step': this.noiseHit(.07, 300 + R() * 200, .18, 2); break;
+      case 'beat': this.tone(58, .16, 'sine', .55); this.tone(52, .14, 'sine', .4, null, .17); break;
+      case 'checkpoint': [660, 880, 1320].forEach((f, i) => this.tone(f, 1.4, 'sine', .14, this.out('sfx', .7, 0), i * .12)); break;
+      case 'door': this.noiseHit(.5, 140, .5, 3, 0, this.out('sfx', .6)); this.tone(70, .4, 'square', .05); break;
+      case 'creak': this.event('creak'); break;
+      case 'whisper': for (let i = 0; i < 8; i++) this.noiseHit(.25, 2500 + R() * 2500, .08, 6, i * .15, this.out('sfx', .5)); break;
+      case 'whoosh': this.noiseHit(1.4, 500, .4, .6, 0, this.out('sfx', .7)); break;
+      case 'scare': {     // jumpscare: boom + screech + scream
+        this.tone(45, 1.2, 'sine', 1, null, 0, .002); this.noiseHit(.6, 180, 1, .5, 0, null, 'lowpass', .002);
+        [1480, 1567, 2217].forEach(f => this.tone(f, .9, 'sawtooth', .07, null, 0, .002));
+        this.scream(1.3, .85, 1.25); break; }
+      case 'stairs': for (let i = 0; i < 6; i++) this.noiseHit(.08, 250, .2, 2, i * .16); break;
+      case 'death': {     // long agonised scream + collapsing low tone
+        this.scream(2.6, 1, 1); setTimeout(() => this.scream(1.8, .6, .8), 300);
+        const o = this.tone(220, 3.5, 'sawtooth', .22, this.out('sfx', .8, 0), 0, .01); if (o) o.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 3.5);
+        this.noiseHit(2.5, 200, .5, .5, 0, this.out('sfx', .8, 0)); break; }
+      case 'ending': [262, 330, 392, 523].forEach((f, i) => this.tone(f, 3, 'sine', .12, this.out('sfx', .7, 0), i * .25)); break;
+      case 'shutter': this.noiseHit(.05, 3000, .3, 1); this.noiseHit(.06, 1800, .25, 1, .08); break;
+      case 'breath': this.noiseHit(1.6, 600, .18, .7, 0, null, 'bandpass', .6); this.noiseHit(1.8, 450, .14, .7, 1.8, null, 'bandpass', .6); break;
+      case 'stick': this.noiseHit(.08, 1200, .3, 1); this.tone(220, .1, 'square', .05); break;
+      case 'seal': { const d = this.out('sfx', .9, 0); [523, 659, 784, 1047].forEach((f, i) => this.tone(f, 2.2, 'sine', .14, d, i * .09)); this.tone(1568, 1.8, 'triangle', .05, d, .4); this.noiseHit(1.2, 3000, .12, 2, 0, d, 'highpass'); this.scream(1.1, .35, 1.6); break; }
+      case 'burn': { const d = this.out('sfx', .5, 0); this.noiseHit(1.4, 2500, .35, .4, 0, d, 'highpass', .05); this.noiseHit(1.2, 400, .3, .6, .1, d); this.tone(60, 1, 'sawtooth', .12, d); break; }
+      case 'pickup': { const d = this.out('sfx', .8, 0); [880, 1320, 1760].forEach((f, i) => this.tone(f, .8, 'sine', .09, d, i * .07)); break; }
+      case 'bellok': { const d = this.out('sfx', .95, 0); [1046, 2793, 4186].forEach((f, i) => this.tone(f, 3, 'sine', .1 / (i + 1), d, 0, .002)); break; }
+      case 'bellbad': { const d = this.out('sfx', .7, 0); for (let i = 0; i < 14; i++) [988, 2640].forEach(f => this.tone(f * (1 + (Math.random() - .5) * .04), .25, 'sine', .08, d, i * .07, .002)); this.scream(1.2, .3, 1.4); break; }
+      case 'run': for (let i = 0; i < 12; i++) this.noiseHit(.06, 260, .3 + i * .03, 2, i * .1); break;
+    }
+  },
+  music(on) { if (on) this.setMode('menu'); else if (this.mode === 'menu') this.setMode(null); },
+  ambient(on) { if (on) this.setMode('game'); else if (this.mode === 'game') this.setMode(null); }
+};
+
+/* =========================================================
+   UI helpers: screens, modal
+   ========================================================= */
+const UI = {
+  cur: null, history: [],
+  show(id, push = true) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id));
+    if (push && this.cur && this.cur !== id) this.history.push(this.cur);
+    this.cur = id;
+    Snd.setMode((id === 'game' || id === 'cut') ? 'game' : 'menu');
+  },
+  back() { Snd.sfx('click'); const p = this.history.pop() || 'menu'; this.show(p, false); if (p === 'menu') Menu.refresh(); },
+  toMenu() { Game.stop(); this.history = []; this.show('menu', false); Menu.refresh(); },
+  modal(title, body, buttons) {
+    return new Promise(res => {
+      $('#mtitle').textContent = title; const b = $('#mbody'); b.innerHTML = ''; if (typeof body === 'string') b.innerHTML = body; else b.appendChild(body);
+      const bt = $('#mbtns'); bt.innerHTML = '';
+      buttons.forEach(([label, val, sprite]) => {
+        let e;
+        if (sprite) { e = el('img', 'btnimg'); e.src = src(sprite); }
+        else { e = el('button', 'tbtn' + (val === true ? ' red' : ''), label); }
+        e.onclick = () => { Snd.sfx('click'); $('#modal').classList.remove('on'); res(val); };
+        bt.appendChild(e);
+      });
+      $('#modal').classList.add('on');
+    });
+  },
+  confirm(title, text) { return this.modal(title, text, [['ยกเลิก', false, 'b_cancel'], ['ยืนยัน', true, 'b_confirm']]); },
+  alert(title, text) { return this.modal(title, text, [['ตกลง', true, 'i_ok']]); },
+  modalOpen() { return $('#modal').classList.contains('on'); }
+};
+
+/* =========================================================
+   SAVE SYSTEM  (GDD §12) — 3 slots, autosave, continue, load
+   ========================================================= */
+const Save = {
+  all() { const d = Store.get('tlf_saves'); return Array.isArray(d) ? d : [null, null, null]; },
+  get(i) { return this.all()[i]; },
+  write(i, data) { const a = this.all(); a[i] = data; Store.set('tlf_saves', a); },
+  remove(i) { const a = this.all(); a[i] = null; Store.set('tlf_saves', a); },
+  latest() { const a = this.all(); let best = -1, t = 0; a.forEach((s, i) => { if (s && s.savedAt > t && !s.completed) { t = s.savedAt; best = i; } }); return best; },
+  migrate(s) {
+    if (!s) return s;
+    if (s.talismans == null) s.talismans = 4;
+    if (!s.items) s.items = { bell: 0, charm: 0 }; if (s.items.incense == null) s.items.incense = 0;
+    if (s.backStreak == null) s.backStreak = 0;
+    if (s.stats && s.stats.sealed == null) s.stats.sealed = 0;
+    if (s.lastCheckpoint === 10) s.lastCheckpoint = 20;
+    return s;
+  },
+  newData(slot, charId) {
+    const c = CH(charId);
+    return {
+      slotId: slot + 1, playerName: '', character: charId, characterSkill: c.skill, gameStartDate: new Date().toISOString(), playTime: 0,
+      currentFloor: ROOF, highestFloor: ROOF, lastCheckpoint: null, unlockedCheckpoints: [], progress: 0, deathCount: 0, completed: false,
+      heartRate: 10, characterStatus: 'Calm', skillCooldown: 0, skillUsage: 0, gameState: 'prologue',
+      talismans: 4, items: { bell: 0, charm: 0, incense: 0 }, backStreak: 0, restSeen: false,
+      stats: { floorsPassed: 0, anomaliesFound: 0, correct: 0, wrong: 0, deaths: 0, sealed: 0, playTime: 0, character: charId },
+      seed: Math.floor(Math.random() * 1e9), savedAt: Date.now()
+    };
+  }
+};
+const fmtTime = s => { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60; return (h ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(ss).padStart(2, '0'); };
+const fmtDate = t => { const d = new Date(t); return d.toLocaleDateString('th-TH') + ' ' + d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }); };
+
+/* =========================================================
+   MAIN MENU
+   ========================================================= */
+const Menu = {
+  init() {
+    document.querySelectorAll('#menu .hot').forEach(h => {
+      h.onmouseenter = () => Snd.sfx('hover');
+      h.onclick = () => { if (h.classList.contains('disabled')) return; Snd.init(); Snd.sfx('click'); this.act(h.dataset.act); };
+    });
+    $('#menuArchive').onclick = () => { Snd.init(); Archive.open(); };
+  },
+  refresh() { $('#hotContinue').classList.toggle('disabled', Save.latest() < 0); $('#marcount').textContent = Archive.count() + '/' + GHOSTS.length; Snd.music(true); },
+  act(a) {
+    if (a === 'start') Slots.open('new');
+    if (a === 'continue') { const i = Save.latest(); if (i >= 0) Game.load(i); }
+    if (a === 'load') Slots.open('load');
+    if (a === 'charsel') CharSel.open(null);
+    if (a === 'options') Options.open();
+    if (a === 'exit') UI.modal('EXIT GAME', 'ปิดแท็บนี้เพื่อออกจากเกม<br>ความคืบหน้าถูกบันทึกอัตโนมัติแล้ว<br><br><i style="color:#999">"แต่โรงแรมจะยังรอคุณอยู่ที่ชั้น 51..."</i>', [['กลับเมนู', true, 'i_back']]);
+  }
+};
+
+/* =========================================================
+   SAVE SLOT SCREEN
+   ========================================================= */
+const Slots = {
+  mode: 'new', pendingChar: null,
+  open(mode, pendingChar = null) { this.mode = mode; this.pendingChar = pendingChar; this.render(); UI.show('slots'); },
+  render() {
+    $('#slotTitle').innerHTML = (this.mode === 'load' ? 'โหลดเกม' : 'เลือกช่องบันทึกสำหรับเกมใหม่') + '<small>' + (this.mode === 'load' ? 'LOAD GAME' : 'NEW GAME · SAVE SLOTS') + '</small>';
+    const L = $('#slotlist'); L.innerHTML = '';
+    Save.all().forEach((s, i) => {
+      const d = el('div', 'slot frame');
+      d.appendChild(el('div', 'num', String(i + 1)));
+      if (s) {
+        const c = CH(s.character);
+        d.innerHTML += `<div class="pic"><img src="${src(s.character + '_normal')}"></div>
+          <div class="info"><b>SAVE SLOT ${i + 1} · ${c.name}</b><br>ชั้นล่าสุด: <b style="font-size:22px">${s.completed ? 'ออกจากโรงแรมแล้ว ✓' : s.currentFloor === ROOF ? 'ดาดฟ้า 51' : s.currentFloor + 'F'}</b> &nbsp;·&nbsp; Checkpoint: ${s.lastCheckpoint ? s.lastCheckpoint + 'F' : '—'}<br>
+          เวลาเล่น ${fmtTime(s.playTime)} &nbsp;·&nbsp; เสียชีวิต ${s.deathCount} ครั้ง &nbsp;·&nbsp; บันทึกเมื่อ ${fmtDate(s.savedAt)}</div>`;
+      } else {
+        d.innerHTML += `<div class="pic" style="display:flex;align-items:center;justify-content:center;background:#111"><img src="${src('i_person')}" style="width:60%;height:60%;object-fit:contain;opacity:.4"></div><div class="info"><b>SAVE SLOT ${i + 1}</b><br><span style="color:#888">— ว่าง (No Save Data) —</span></div>`;
+      }
+      const acts = el('div', 'acts');
+      if (this.mode === 'load') {
+        const lb = el('button', 'tbtn red', 'โหลด'); lb.disabled = !s; lb.onclick = e => { e.stopPropagation(); Game.load(i); }; acts.appendChild(lb);
+      } else {
+        const nb = el('button', 'tbtn red', s ? 'เขียนทับ' : 'เริ่มใหม่'); nb.onclick = e => { e.stopPropagation(); this.choose(i); }; acts.appendChild(nb);
+      }
+      if (s) { const db = el('button', 'tbtn', 'ลบ'); db.onclick = async e => { e.stopPropagation(); if (await UI.confirm('ลบข้อมูลเซฟ', `ต้องการลบ Save Slot ${i + 1} (${CH(s.character).name}, ${s.currentFloor}F) ใช่หรือไม่?<br><b style="color:#ff6a6a">ข้อมูลจะหายถาวร</b>`)) { Save.remove(i); this.render(); } }; acts.appendChild(db); }
+      d.appendChild(acts);
+      d.onclick = () => { if (this.mode === 'load') { if (s) Game.load(i); } else this.choose(i); };
+      L.appendChild(d);
+    });
+  },
+  async choose(i) {
+    Snd.sfx('click');
+    const s = Save.get(i);
+    if (s && !(await UI.confirm('เขียนทับข้อมูลเซฟ', `Save Slot ${i + 1} มีข้อมูลอยู่แล้ว (${CH(s.character).name}, ${s.currentFloor}F)<br>ต้องการเขียนทับด้วยเกมใหม่หรือไม่?`))) return;
+    if (this.pendingChar) Game.newGame(i, this.pendingChar);
+    else CharSel.open(i);
+  }
+};
+
+/* =========================================================
+   CHARACTER SELECT  (GDD §8)
+   ========================================================= */
+const CharSel = {
+  slot: null, sel: 'erin',
+  init() {
+    const g = $('#cgrid');
+    // GDD: 2 rows x 3 — row 1 women, row 2 men
+    ['erin', 'mira', 'lin', 'kirin', 'ren', 'zen'].forEach(id => {
+      const c = CH(id); const d = el('div', 'ccard'); d.dataset.id = id;
+      d.innerHTML = `<img src="${src(id + '_full')}"><div class="nm">${c.name}<span>${c.gender}</span></div>`;
+      d.onclick = () => { Snd.sfx('click'); this.select(id); };
+      d.onmouseenter = () => Snd.sfx('hover');
+      g.appendChild(d);
+    });
+  },
+  open(slot) { this.slot = slot; this.select(Store.get('tlf_pref') || 'erin'); UI.show('charsel'); },
+  select(id) {
+    this.sel = id; const c = CH(id);
+    document.querySelectorAll('.ccard').forEach(d => d.classList.toggle('sel', d.dataset.id === id));
+    $('#cpimg').src = src(id + '_worried');
+    $('#cname').textContent = c.name;
+    $('#cgender').textContent = `${c.th} · ${c.gender} · ${c.age} ปี`;
+    $('#cbio').textContent = c.bio;
+    $('#cskname').textContent = `สกิล: ${c.skill} (${c.skillTh}) · ${c.type === 'active' ? 'กดใช้งาน' : 'ติดตัว'}`;
+    $('#cskdesc').textContent = c.desc;
+    $('#cplay').innerHTML = '<b style="color:#eee">รูปแบบการเล่น:</b> ' + c.play;
+    $('#cstats').innerHTML = '<div style="font-weight:900;letter-spacing:3px;margin-bottom:6px">ค่าสถานะพื้นฐาน</div>' + Object.entries(c.stats).map(([k, v]) => `<div class="stat"><span>${k}</span><i>${[1, 2, 3, 4, 5].map(n => `<u class="${n <= v ? 'f' : ''}"></u>`).join('')}</i></div>`).join('');
+  },
+  confirm() {
+    Snd.sfx('confirm'); Store.set('tlf_pref', this.sel);
+    if (this.slot == null) Slots.open('new', this.sel);
+    else Game.newGame(this.slot, this.sel);
+  }
+};
+
+/* =========================================================
+   CUTSCENE ENGINE
+   ========================================================= */
+const Cut = {
+  steps: [], i: 0, done: null, typing: false, full: '', timer: null,
+  play(steps, charId) {
+    this.steps = steps; this.i = 0; this.charId = charId; $('#cutactors').innerHTML = ''; $('#note').style.display = 'none';
+    UI.show('cut');
+    return new Promise(res => { this.done = res; this.step(); });
+  },
+  step() {
+    const s = this.steps[this.i]; if (!s) return this.finish();
+    if (s.bg) $('#cutbg').src = src(s.bg);
+    if (s.dim != null) $('#cutbg').style.filter = `brightness(${s.dim})`;
+    if (s.filter) $('#cutbg').style.filter = s.filter;
+    if (s.sfx) Snd.sfx(s.sfx);
+    const act = $('#cutactors');
+    const six = ['zen', 'lin', 'kirin', 'erin', 'ren', 'mira'];
+    if (s.actors === 'lineup' || (s.actors === 'sleepers' && !act.children.length)) {
+      act.innerHTML = '';
+      six.forEach((id, k) => {
+        const im = el('img'); im.src = src(id + (s.actors === 'lineup' ? '_full' : '_sleep')); im.dataset.id = id;
+        im.style.cssText = `left:${520 + k * 150}px;bottom:290px;height:340px;opacity:0;transition:opacity 1.2s,left 1.4s ease-in,filter 1s`;
+        act.appendChild(im); requestAnimationFrame(() => setTimeout(() => im.style.opacity = 1, 50 + k * 120));
+      });
+    } else if (s.actors === 'sleepers') act.querySelectorAll('img').forEach((im, k) => setTimeout(() => im.src = src(im.dataset.id + '_sleep'), k * 350));
+    if (s.actors === 'wakeall') act.querySelectorAll('img').forEach(im => { im.src = src(im.dataset.id + '_shocked'); im.style.height = '230px'; im.style.bottom = '330px'; });
+    if (s.actors === 'scatter') act.querySelectorAll('img').forEach((im, k) => {
+      if (im.dataset.id === this.charId) { im.src = src(this.charId + '_full'); im.style.height = '380px'; im.style.bottom = '280px'; im.style.left = '980px'; }
+      else { im.style.left = '-300px'; im.style.opacity = 0; im.style.filter = 'blur(4px) brightness(.3)'; }
+    });
+    if (s.actors === 'vanish') act.querySelectorAll('img').forEach(im => { if (im.dataset.id !== this.charId) { im.style.opacity = 0; im.style.filter = 'blur(6px)'; } });
+    if (s.actors === 'wake') act.querySelectorAll('img').forEach(im => { if (im.dataset.id === this.charId) { im.src = src(this.charId + '_full'); im.style.left = '760px'; im.style.height = '380px'; } });
+    $('#note').style.display = s.note ? 'block' : 'none'; if (s.note) $('#note').innerHTML = RULES_NOTE;
+    $('#cutname').textContent = s.speaker || '';
+    this.type(s.text || '');
+  },
+  type(t) {
+    clearInterval(this.timer); this.full = t; const box = $('#cuttext'); box.textContent = '';
+    const sp = { slow: 2, normal: 1, fast: 3, instant: 999 }[SET.textSpeed]; const per = SET.textSpeed === 'slow' ? 1 : sp;
+    if (sp >= 999) { box.textContent = t; return; }
+    let k = 0; this.typing = true;
+    this.timer = setInterval(() => { k += per; box.textContent = t.slice(0, k); if (k >= t.length) { clearInterval(this.timer); this.typing = false; } }, SET.textSpeed === 'slow' ? 45 : 22);
+  },
+  next() {
+    if (UI.cur !== 'cut') return;
+    if (this.typing) { clearInterval(this.timer); this.typing = false; $('#cuttext').textContent = this.full; return; }
+    Snd.sfx('click'); this.i++; this.step();
+  },
+  skip() { Snd.sfx('click'); this.finish(); },
+  finish() { clearInterval(this.timer); const d = this.done; this.done = null; if (d) d(); }
+};
+$('#cut').addEventListener('click', e => { if (e.target.id !== 'cutskipbtn') Cut.next(); });
+
+/* =========================================================
+   GAME
+   ========================================================= */
+const Game = {
+  S: null, slot: 0, fl: null, running: false, busy: false, last: 0,
+  px: 900, facing: 1, target: null, keys: {}, walkT: 0, stepT: 0, beatT: 0, hrShown: 0, ecgPhase: 0,
+  exprOverride: null, exprUntil: 0, flickT: 0, baseCache: {}, aiming: false, pendingSeal: null,
+
+  /* ---------- lifecycle ---------- */
+  async newGame(slot, charId) {
+    this.slot = slot; this.S = Save.newData(slot, charId); this.save('start');
+    await Cut.play(PROLOGUE(CH(charId)), charId);
+    this.S.gameState = 'play'; this.save('character');
+    this.start();
+  },
+  load(slot) {
+    const s = Save.get(slot); if (!s) return;
+    Snd.init(); this.slot = slot; this.S = Save.migrate(s);
+    if (s.completed) { UI.alert('เกมนี้จบแล้ว', `${CH(s.character).name} ออกจากโรงแรมไปแล้ว<br>เริ่มเกมใหม่เพื่อผนึกผีที่ยังขาดในสารานุกรม`); return; }
+    if (s.gameState === 'prologue') { this.newGameFromLoaded(); return; }
+    this.start();
+  },
+  async newGameFromLoaded() { await Cut.play(PROLOGUE(CH(this.S.character)), this.S.character); this.S.gameState = 'play'; this.start(); },
+  start() {
+    this.baseCache = {}; this.running = true; this.busy = false; this.target = null; this.keys = {}; this.setAim(false);
+    UI.history = []; UI.show('game', false);
+    this.setupHUD();
+    this.enterFloor(this.S.currentFloor, { fromStart: true, arrive: true });
+    this.last = performance.now(); requestAnimationFrame(t => this.loop(t));
+  },
+  stop() { this.running = false; this.setAim(false); },
+  save(reason) {
+    const S = this.S; if (!S) return;
+    S.savedAt = Date.now(); S.characterStatus = hrLevel(S.heartRate).name; S.stats.playTime = S.playTime; S.stats.deaths = S.deathCount;
+    S.progress = Math.round((ROOF - S.highestFloor) / 50 * 100);
+    Save.write(this.slot, JSON.parse(JSON.stringify(S)));
+    const ic = $('#savedicon'); if (ic && reason !== 'silent') { ic.style.opacity = 1; setTimeout(() => ic.style.opacity = 0, 900); }
+  },
+  get C() { return CH(this.S.character); },
+
+  /* ---------- floor generation (GDD §5) ---------- */
+  baseLayout(zone) {
+    if (this.baseCache[zone]) return this.baseCache[zone];
+    const r = rngFrom(this.S.seed * 31 + zone * 1013 + 7);
+    const objs = []; const usedSprites = new Set();
+    for (const kind of ['floor', 'mid', 'hi', 'ceil']) {
+      const pool = shuffle(r, OBJECTS.filter(o => o.kind === kind && o.zones.includes(zone)));
+      const slots = shuffle(r, SLOTS[kind].map((_, i) => i));
+      let n = 0;
+      for (const o of pool) {
+        if (n >= ZONE_COUNTS[kind]) break; if (usedSprites.has(o.sprite)) continue;
+        usedSprites.add(o.sprite);
+        objs.push({ id: o.id, name: o.name, sprite: o.sprite, kind, slot: slots[n], h: o.h, flip: r() < .3 });
+        n++;
+      }
+    }
+    return (this.baseCache[zone] = objs);
+  },
+  genFloor(f, opts = {}) {
+    const zone = zoneOf(f);
+    const r = rngFrom((this.S.seed ^ (f * 7919)) + Math.floor(Math.random() * 1e6));
+    const fl = {
+      f, zone, objs: this.baseLayout(zone).map(o => Object.assign({}, o)),
+      doors: DOORX.map(x => ({ x, sprite: 'f_door', w: DOOR_W, h: DOOR_H })),
+      plates: DOORX.map((_, i) => String(f).padStart(2, '0') + '0' + (i + 1)),
+      signUp: f >= 50 ? '▲ ROOF' : '▲ ' + (f + 1) + 'F', signDown: f > 1 ? '▼ ' + (f - 1) + 'F' : '▼ LOBBY',
+      anomaly: null, flicker: false
+    };
+    // 5.2 — moving existing objects around is NORMAL, not an anomaly
+    if (!opts.exact) {
+      for (const kind of ['floor', 'mid', 'hi', 'ceil']) {
+        if (r() > .7) continue;
+        const items = fl.objs.filter(o => o.kind === kind);
+        const slots = shuffle(r, SLOTS[kind].map((_, i) => i));
+        items.forEach((o, i) => o.slot = slots[i]);
+      }
+    }
+    fl.pre = JSON.stringify(fl);                       // the floor as it "should" be — restored after a seal
+    if (!opts.normal && r() < ANOM_P[zone]) {
+      const lv = ZONE_LEVELS[zone]; let tot = 0; for (const k in lv) tot += lv[k];
+      for (let tries = 0; tries < 20 && !fl.anomaly; tries++) {
+        let x = r() * tot, level = 1; for (const k in lv) { x -= lv[k]; if (x <= 0) { level = +k; break; } }
+        const cand = ANOMALIES.filter(a => a.lvl === level && a.id !== this.lastAnomaly && (!a.stalk || zone >= 2));
+        const a = pick(r, cand);
+        const snapshot = JSON.stringify(fl);
+        if (a.apply(fl, r)) { fl.anomaly = a; this.lastAnomaly = a.id; }
+        else Object.assign(fl, JSON.parse(snapshot));
+      }
+    }
+    // hunters: a normal-looking floor where something comes out after a while
+    if (!fl.anomaly && !opts.normal && Math.random() < HUNT_P[zone]) fl.hunt = { t: 7 + Math.random() * (14 - zone * 1.5) };
+    // decoy scares on any floor
+    fl.decoyT = 3 + Math.random() * 9;
+    // golden pickups
+    if (!opts.normal && Math.random() < .16) {
+      const t = pick(Math.random, ['talisman', 'talisman', 'talisman', 'incense', 'incense', 'charm', 'bell']);
+      fl.drops = [{ type: t, x: 450 + Math.random() * 800 }];
+    }
+    return fl;
+  },
+
+  /* ---------- rendering ---------- */
+  render(fl, container, isRoof) {
+    container.innerHTML = '';
+    if (isRoof) return;
+    const add = (o, cls, ent) => {
+      const a = A[o.sprite]; if (!a) return null;
+      let h = o.h, w = h * a.ar; const mw = KIND_MAXW[o.kind]; if (mw && w > mw) { w = mw; h = w / a.ar; }
+      const im = el('img', 'obj ' + cls + (o.cls ? ' ' + o.cls : '')); im.src = a.src; im.draggable = false;
+      const x = o.x != null ? o.x : SLOTS[o.kind][o.slot];
+      let top;
+      if (o.kind === 'floor') top = FLOOR_Y - h;
+      else if (o.kind === 'mid') top = 565 - h / 2;
+      else if (o.kind === 'hi') top = 392 - h;
+      else if (o.kind === 'ceil') top = 108;
+      else top = o.y - h / 2;
+      im.style.cssText = `left:${x - w / 2}px;top:${top}px;width:${w}px;height:${h}px;z-index:${o.z || { floor: 6, mid: 4, hi: 4, ceil: 5 }[o.kind] || 4};`;
+      o._x = x; o._w = w; o._el = im; o._top = top; o._h = h;
+      this.styleObj(o);
+      im.onclick = e => { e.stopPropagation(); this.clickEntity(ent || o, im); };
+      container.appendChild(im); return im;
+    };
+    fl.doors.forEach((d, i) => {
+      const im = add({ sprite: d.sprite, kind: 'fx', x: d.x, y: DOOR_BOTTOM - d.h / 2, h: d.h, z: 3, name: 'ประตูห้อง' }, 'door', d);
+      if (im) { im.style.width = d.w + 'px'; im.style.left = (d.x - d.w / 2) + 'px'; d._el = im; d._x = d.x; d.name = 'ประตูห้อง ' + (fl.plates[i] || ''); }
+      if (!d.extra) {
+        const p = el('div', 'plate', fl.plates[i]); p.style.left = d.x + 'px'; p.style.top = (DOOR_BOTTOM - d.h - 36) + 'px'; p.style.zIndex = 3;
+        const pe = { name: 'ป้ายเลขห้อง ' + fl.plates[i], anom: fl.plateAnom === i ? 1 : 0, _x: d.x };
+        p.onclick = e => { e.stopPropagation(); this.clickEntity(pe, p); };
+        container.appendChild(p);
+      }
+    });
+    const su = el('div', 'ssign', fl.signUp); su.style.cssText += 'left:62px;top:206px;z-index:3';
+    su.onclick = e => { e.stopPropagation(); this.clickEntity({ name: 'ป้ายบันไดขึ้น', _x: 110 }, su); }; container.appendChild(su);
+    const sd = el('div', 'ssign', fl.signDown); sd.style.cssText += 'left:1478px;top:206px;z-index:3';
+    sd.onclick = e => { e.stopPropagation(); this.clickEntity({ name: 'ป้ายบันไดลง', anom: fl.signAnom, _x: 1530 }, sd); }; container.appendChild(sd);
+    fl.objs.forEach(o => add(o, o.kind));
+    if (fl.removed) {                                  // an invisible spot where something used to be
+      const o = fl.removed, x = SLOTS[o.kind] ? SLOTS[o.kind][o.slot] : 800;
+      const top = o.kind === 'floor' ? FLOOR_Y - 140 : o.kind === 'mid' ? 505 : o.kind === 'hi' ? 280 : 110;
+      const h = el('div', 'emptyspot'); h.style.cssText = `left:${x - 60}px;top:${top}px;width:120px;height:140px`;
+      const ent = { name: 'ที่ว่างตรงนี้', anom: 1, _x: x };
+      h.onclick = e => { e.stopPropagation(); this.clickEntity(ent, h); }; container.appendChild(h);
+    }
+    (fl.drops || []).forEach(d => { if (!d.taken) this.addDrop(d, container); });
+    (fl.stickers || []).forEach(s => this.addSticker(s.x, s.y, false, container));
+  },
+  styleObj(o) {
+    const im = o._el; if (!im) return;
+    const tr = [];
+    if (o.flip) tr.push('scaleX(-1)');
+    if (o.sc) tr.push(`scale(${o.sc})`);
+    if (o.sx || o.sy) tr.push(`scale(${o.sx || 1},${o.sy || 1})`);
+    if (o.skew) tr.push(`skewX(${o.skew}deg)`);
+    if (o.rot) tr.push(`rotate(${o.rot}deg)`);
+    im.style.transform = tr.join(' ');
+    if (o.rot === 180) im.style.transformOrigin = '50% 50%';
+    im.style.filter = o.filter || '';
+    im.style.opacity = o.op != null ? o.op : 1;
+  },
+
+  /* ---------- floors ---------- */
+  async enterFloor(f, opts = {}) {
+    const S = this.S; S.currentFloor = f; this.setAim(false); this.hunter = null;
+    const roof = f === ROOF;
+    let fl;
+    if (roof) fl = { f, roof: true, objs: [], doors: [] };
+    else if (isSafeFloor(f)) fl = this.genFloor(f, { exact: true, normal: true });   // 50 = learn the layout · 40/30/20 = checkpoints · 10 = shrine
+    else fl = this.genFloor(f);
+    if (f === 10) { fl.shrine = true; [['it_spirithouse', 835, 150], ['it_candle', 760, 70], ['it_lotus', 905, 55]].forEach(([s, x, h]) => fl.objs.push({ fx: true, kind: 'fx', sprite: s, x, y: FLOOR_Y - h / 2, h, z: 7, name: 'ศาลพักใจ' })); }
+    this.fl = fl;
+    $('#wbg').src = src(roof ? 'bg_roof' : 'bg_corridor'); $('#wbg').style.filter = '';
+    this.render(fl, $('#layer'), roof);
+    this.px = roof ? 1050 : (opts.fromLeft === false ? 1360 : 330);
+    this.promptState = undefined; this.facing = 1; this.turnX = null; this.target = null; this.pendingPick = null;
+    $('#hfloornum').textContent = roof ? 'ดาดฟ้า 51' : 'ชั้นที่ ' + f;
+    S.highestFloor = Math.min(S.highestFloor, f);
+
+    if (!opts.fromStart && !roof) {
+      let inc = 3;
+      if (this.C.id === 'zen' && Math.random() < .15) { inc = 0; this.say('ZEN', 'ฮึ... ดวงยังดีอยู่ ไม่ตื่นเต้นสักนิด', 'normal'); }
+      if (fl.anomaly) inc += 4;
+      this.addHR(inc);
+    }
+    if (opts.arrive && REST_FLOORS.includes(f)) S.talismans = Math.max(S.talismans, 4);
+    this.updateItemBar();
+    if (!opts.silent) await this.titleCard(f);
+    this.save(opts.fromStart ? 'silent' : 'floor');
+
+    if (roof) this.say('', 'ดาดฟ้าชั้น 51 — ประตูทางลงอยู่ทางซ้าย\n(← → / A D หรือคลิกที่พื้นเพื่อเดิน · T = แปะยันต์)', null);
+    else if (isCheckpoint(f)) this.checkpointReached(f, opts);
+    else if (f === 10) this.restShrine(opts);
+    else if (f === 50) this.say(this.C.name, `${ZONE_NAMES[0]}\nนี่คือหน้าตา "ปกติ" ของโซนนี้ จำไว้ให้ดี... สิ่งของ ประตู เลขห้อง ป้ายบันได`, 'worried');
+    else if (!opts.quiet) this.say(this.C.name, pick(Math.random, THOUGHTS[hrLevel(S.heartRate).key] || THOUGHTS.calm), null);
+
+    if (fl.anomaly && this.C.id === 'mira' && Math.random() < .55) setTimeout(() => this.miraHint(), 1200);
+  },
+  async titleCard(f) {
+    const tc = $('#titlecard');
+    $('#tcmain').textContent = f === ROOF ? 'ROOF' : f + 'F';
+    $('#tcsub').textContent = 'GRAND HOTEL';
+    $('#tcsub2').textContent = f === ROOF ? 'ดาดฟ้า' : isCheckpoint(f) ? 'CHECKPOINT · บันทึกเกม' : f === 10 ? 'ศาลพักใจ' : ZONE_NAMES[zoneOf(f)];
+    tc.style.opacity = 1; await sleep(700); tc.style.opacity = 0; await sleep(200);
+  },
+  async loreNote(t, body, title) {
+    const n = el('div'); n.style.cssText = 'width:660px;padding:26px 34px;background:#e8e2d3;color:#111;font-size:22px;line-height:1.65;white-space:pre-line;font-weight:600;border:2px solid #333;transform:rotate(-1deg)';
+    n.innerHTML = `<div style="text-align:center;font-weight:900;font-size:24px;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:12px">${t}</div>${body}`;
+    await UI.modal(title, n, [['ปิด', true, 'i_close']]);
+  },
+  async checkpointReached(f, opts) {
+    const S = this.S;
+    const fresh = !S.unlockedCheckpoints.includes(f);
+    if (fresh) S.unlockedCheckpoints.push(f);
+    S.lastCheckpoint = Math.min(S.lastCheckpoint || 99, f);
+    if (opts.arrive) S.heartRate = Math.max(10, S.heartRate - 35);
+    this.save('checkpoint');
+    if (opts.haunted) { this.toast('ถูกส่งกลับ ' + f + 'F', 'จุดเริ่มต้นของส่วนนี้', true, 2400); return; }
+    this.toast('CHECKPOINT REACHED', `${f}F · บันทึกแล้ว · ยันต์เติมครบ ${S.talismans} ผืน`, false, 2600);
+    Snd.sfx('checkpoint');
+    if (fresh) { this.say(this.C.name, 'มีอะไรบางอย่างวางอยู่ตรงนี้...', 'worried'); await sleep(1300); const [t, body] = LORE[f]; await this.loreNote(t, body, 'CHECKPOINT ' + f + 'F'); }
+    if (this.fl && this.fl.f === f) this.say(this.C.name, `จุดบันทึก · ${ZONE_NAMES[zoneOf(f)]}\nนี่คือหน้าตาปกติของโซนต่อไป จำไว้ก่อนลงบันไดขวา`, 'normal');
+  },
+  async restShrine(opts) {
+    const S = this.S;
+    if (opts.arrive) { Snd.sfx('checkpoint'); this.toast('ศาลพักใจ', 'ยันต์ถูกเติมจนครบ · ที่นี่ไม่มีการบันทึก', false, 2600); S.heartRate = Math.max(10, S.heartRate - 20); }
+    if (!S.restSeen) { S.restSeen = true; await sleep(1200); const [t, body] = LORE[10]; await this.loreNote(t, body, 'ชั้น 10'); }
+    this.say(this.C.name, 'อีกสิบชั้น... ไม่มีจุดบันทึกแล้ว ถ้าพลาดต้องกลับไปเริ่มที่ชั้น 20', 'worried');
+  },
+
+  /* ---------- decisions ---------- */
+  async decide(dir) {          // 'down' (right stairs) | 'back' (left stairs) | 'roofdoor'
+    if (this.busy) return; this.busy = true; this.target = null; this.keys = {}; this.setAim(false);
+    const S = this.S, fl = this.fl, f = fl.f;
+    Snd.sfx('stairs');
+    if (dir === 'roofdoor') { Snd.sfx('door'); await this.fade(1); this.busy = false; await this.enterFloor(50, { arrive: true }); await this.fade(0); return; }
+    if (isSafeFloor(f) && dir === 'back' && !this.hunter) { this.say(this.C.name, 'ไม่มีเหตุผลต้องย้อนกลับขึ้นไป... ไปต่อเถอะ', 'normal'); this.busy = false; return; }
+
+    if (this.hunter) {                                       // running from a hunter: either stair is fine
+      this.hunter = null; S.backStreak = 0;
+      if (dir === 'back') { this.toast('หนีพ้น!', 'วิ่งขึ้นบันไดได้ทัน', false, 1800); await this.fade(1); this.busy = false; await this.enterFloor(f, { silent: true, quiet: true }); this.say(this.C.name, 'หนีมาได้... แต่ยังต้องผ่านชั้นนี้ให้ได้', 'shocked'); await this.fade(0); return; }
+    }
+    if (dir === 'down') {
+      if (fl.badSeal) { S.stats.wrong++; return this.killBy(fl.gid || this.randomGhost().id, 'ยันต์ที่แปะผิดที่ปลุกสิ่งที่หลับอยู่... และมันตามคุณลงบันไดมา'); }
+      if (!fl.anomaly) {                                     // correct
+        S.stats.correct++; S.stats.floorsPassed++; S.backStreak = 0; this.addHR(-6); this.tickCooldown();
+        await this.fade(1); this.busy = false;
+        if (f - 1 === 1) return this.ending();
+        await this.enterFloor(f - 1, { arrive: true }); await this.fade(0);
+      } else {                                               // walked past an anomaly
+        S.stats.wrong++;
+        if (fl.anomaly.lvl >= 4) { await this.chase(); if (this.tryLastChance()) return; return this.killBy(fl.gid, fl.anomaly.death || 'มีบางสิ่งไล่ตามคุณทัน'); }
+        await this.haunt(fl.anomaly);
+      }
+    } else {
+      if (fl.anomaly) {                                      // correct: turned back
+        S.stats.correct++; S.stats.anomaliesFound++; S.backStreak = 0; this.addHR(-6);
+        this.toast('ANOMALY AVOIDED', `${fl.anomaly.name} (Lv.${fl.anomaly.lvl})`, false, 2600); Snd.sfx('confirm');
+        await this.fade(1); this.busy = false;
+        await this.enterFloor(f, { silent: true, quiet: true });
+        this.say(this.C.name, 'วิ่งขึ้นบันไดมาได้ทัน... แต่ป้ายยังบอกชั้น ' + f + '\nทางเดินถูกสร้างขึ้นใหม่ ต้องตรวจสอบอีกครั้ง', 'worried');
+        await this.fade(0);
+      } else {                                               // ran away from nothing
+        S.stats.wrong++; S.backStreak = (S.backStreak || 0) + 1; this.addHR(8);
+        if (S.backStreak >= 3) { Snd.sfx('whisper'); return this.killBy(this.randomGhost().id, 'คุณวิ่งหนีจากทางเดินที่ปกติดีถึงสามครั้งติด... โรงแรมเกลียดแขกขี้ขลาด'); }
+        this.toast('ไม่มีความผิดปกติ', S.backStreak === 2 ? 'อย่าหนีอีก — ครั้งหน้าโรงแรมจะไม่ให้อภัย' : 'คุณย้อนกลับขึ้นไปหนึ่งชั้นโดยเปล่าประโยชน์', true, 2600);
+        await this.fade(1); this.busy = false;
+        await this.enterFloor(Math.min(sectionStart(f), f + 1), { fromLeft: false, quiet: true });
+        this.say(this.C.name, S.backStreak === 2 ? 'ได้ยินเสียงหัวเราะดังมาจากทุกห้อง... "หนีอีกแล้วเหรอ"' : 'ชั้นเมื่อกี้... ไม่มีอะไรผิดปกติเลยนี่นา เสียเวลาเปล่า', 'shocked');
+        await this.fade(0);
+      }
+    }
+  },
+  /* being haunted: ghost in your face, then sent back to the start of this section */
+  async haunt(an) {
+    const S = this.S, f = this.fl.f, gid = this.fl.gid;
+    await this.jumpscare(gid);
+    this.addHR(Math.round([0, 16, 22, 28][an.lvl] * (this.C.id === 'erin' ? .8 : 1)));
+    await sleep(300);
+    if (S.heartRate >= 100) { if (this.tryLastChance()) return; return this.killBy(gid || this.randomGhost().id, 'หัวใจของคุณทนความกลัวต่อไปไม่ไหว (Heart Rate 100%)'); }
+    if (S.items.charm > 0) {
+      S.items.charm--; this.toast('พระเครื่องแตกร้าว!', 'มันปกป้องคุณจากการถูกส่งกลับ', false, 2600);
+      await this.fade(1); this.busy = false; await this.enterFloor(f, { silent: true, quiet: true });
+      this.say(this.C.name, 'พระเครื่องร้อนจนลวกมือ... แล้วก็แตกเป็นเสี่ยง ๆ', 'shocked'); await this.fade(0); return;
+    }
+    const to = sectionStart(f);
+    this.toast('ถูกหลอกหลอน!', `${an.name} · ถูกส่งกลับไปชั้น ${to}`, true, 2800);
+    await this.fade(1); this.busy = false;
+    await this.enterFloor(to, { haunted: true, quiet: true });
+    this.say(this.C.name, `ลืมตาขึ้นมาอีกที... ป้ายบอกชั้น ${to}\nต้องเริ่มส่วนนี้ใหม่ทั้งหมด`, 'shocked');
+    await this.fade(0);
+  },
+  tryLastChance() {
+    const S = this.S;
+    if (this.C.id !== 'ren' || S.skillCooldown > 0) return false;
+    S.skillCooldown = 5; S.skillUsage++; S.heartRate = 75; this.hunter = null;
+    $('#jump').style.display = 'none';
+    this.toast('LAST CHANCE!', 'เรนกระชากตัวเองถอยหนีได้ในวินาทีสุดท้าย', true, 2800);
+    (async () => {
+      await this.fade(1); this.busy = false;
+      await this.enterFloor(this.fl.f, { silent: true, quiet: true });
+      this.say('REN', 'ฮึก... เกือบไปแล้ว! ครั้งหน้าไม่รอดแน่ ต้องดูให้ดี', 'shocked');
+      await this.fade(0);
+    })();
+    return true;
+  },
+  randomGhost() { const z = this.fl ? this.fl.zone || 0 : 0; return ghostFor(z, Math.random); },
+  async jumpscare(gid) {
+    let face, pos = '50% 35%', size = 'auto 112%';
+    if (gid && JUMP_FACES.includes(gid)) face = 'js_' + gid;
+    else if (Math.random() < .25) { face = 'j_' + pick(Math.random, CHARS.filter(c => c.id !== this.C.id)).id; pos = '50% 30%'; size = 'auto 118%'; }
+    else face = 'js_' + pick(Math.random, JUMP_FACES);
+    const j = $('#jump'), jf = $('#jumpface'), jr = $('#jumpred');
+    jf.style.backgroundImage = `url(${src(face)})`; jf.style.backgroundPosition = pos; jf.style.backgroundSize = size;
+    jf.style.animation = 'none'; jr.style.animation = 'none'; void jf.offsetWidth; jf.style.animation = ''; jr.style.animation = '';
+    j.style.display = 'flex'; Snd.sfx('scare'); this.setExpr('scream', 2200);
+    if (SET.shake) j.classList.add('shk3');
+    await sleep(850); j.style.display = 'none'; j.classList.remove('shk3'); this.flash(.9);
+  },
+  async chase() {
+    this.setExpr('scream', 3000); this.say(this.C.name, 'ไม่นะ... มันตามมา! วิ่ง!!', 'scream');
+    Snd.sfx('run'); Snd.sfx('whisper');
+    const d = $('#fxdark'); d.style.transition = 'opacity 1s'; d.style.opacity = .8;
+    const gid = this.fl.gid || this.randomGhost().id;
+    const gi = el('img', 'obj ghostfx'); gi.src = A['g_' + gid].src;
+    gi.style.cssText = `left:${this.px - 420}px;top:430px;height:320px;z-index:12;transition:left .6s ease-in,transform .6s;filter:brightness(1.3) contrast(1.4)`;
+    $('#layer').appendChild(gi); await sleep(30); gi.style.left = (this.px - 90) + 'px'; gi.style.transform = 'scale(1.7)';
+    await sleep(600); d.style.opacity = 0;
+  },
+  async killBy(gid, cause) {
+    this.busy = true;
+    await this.jumpscare(gid);
+    return this.die(cause, gid);
+  },
+  async die(cause, gid) {
+    const S = this.S; this.busy = true; this.hunter = null; this.setAim(false);
+    S.deathCount++; S.stats.deaths = S.deathCount; S.gameState = 'dead';
+    Snd.sfx('death'); this.flash(1);
+    await sleep(350);
+    const dp = $('#dpimg'); dp.style.animation = 'none'; void dp.offsetWidth; dp.style.animation = '';
+    dp.src = src(this.C.id + '_death');
+    const dg = $('#dghost'); if (gid && A['g_' + gid]) { dg.src = A['g_' + gid].src; dg.style.display = 'block'; } else dg.style.display = 'none';
+    const cp = S.lastCheckpoint, g = gid && GHOST(gid);
+    $('#drows').innerHTML = `ตัวละคร: <b>${this.C.name}</b><br>เสียชีวิตที่: <b>ชั้น ${this.fl.f}</b>${g ? `<br>ผู้ลงมือ: <b style="color:#ff6a6a">${g.name}</b>` : ''}<br>จำนวนครั้งที่เสียชีวิต: <b>${S.deathCount}</b><br>จุดบันทึก: <b>${cp ? cp + 'F' : 'ยังไม่มี'}</b>`;
+    $('#dcause').innerHTML = '<b>สาเหตุการเสียชีวิต</b><br>' + cause +
+      `<div style="margin-top:12px;color:${cp ? '#ddd' : '#ff6a6a'};font-weight:800">${cp ? '↻ RETRY จะพากลับไปเริ่มที่จุดบันทึกชั้น ' + cp : '↻ ยังไม่ได้ผ่านจุดบันทึกใดเลย — ต้องเริ่มใหม่ตั้งแต่ดาดฟ้าชั้น 51'}</div>`;
+    if (cp) { S.currentFloor = cp; S.heartRate = 15; }
+    else { S.currentFloor = ROOF; S.highestFloor = ROOF; S.heartRate = 10; S.stats.floorsPassed = 0; S.stats.anomaliesFound = 0; S.stats.correct = 0; S.stats.wrong = 0; }
+    S.skillCooldown = 0; S.backStreak = 0; S.talismans = 4; S.gameState = 'play';
+    this.save('death');
+    this.running = false; UI.show('death', false);
+  },
+  retry() { Snd.sfx('confirm'); this.S = Save.migrate(Save.get(this.slot) || this.S); this.start(); },
+  async ending() {
+    const S = this.S; this.running = false; UI.history = [];
+    S.completed = true; S.currentFloor = 1; S.highestFloor = 1; S.gameState = 'ended'; S.stats.floorsPassed++;
+    const loops = (Store.get('tlf_loops') || 0) + 1; Store.set('tlf_loops', loops);
+    const trueEnd = Archive.count() >= GHOSTS.length;
+    S.loop = loops; this.save('end');
+    UI.show('ending', false); Snd.sfx('ending');
+    const c = this.C, bg = $('#endbg'), story = $('#endstory'), panel = $('#endpanel'), fl = $('#endflash');
+    panel.classList.remove('on'); story.style.opacity = 1; bg.src = src('bg_end'); bg.style.filter = 'brightness(.9)'; bg.style.opacity = 1;
+    bg.classList.remove('kb'); void bg.offsetWidth; bg.classList.add('kb');
+    let skip = false, tap = null;
+    $('#endskip').onclick = e => { e.stopPropagation(); skip = true; tap && tap(); };
+    $('#ending').onclick = () => tap && tap();
+    const line = async (t, ms = 4200) => { if (skip) return; story.textContent = t; await new Promise(r => { tap = r; setTimeout(r, ms); }); tap = null; };
+    const others = CHARS.filter(x => x.id !== c.id).map(x => x.name).join(', ');
+    await line('ชั้นที่ 1\nป้าย "FLOOR 1 · EXIT" ส่องแสงสลัวอยู่ปลายทางเดิน');
+    await line(`ตรงหน้าประตูทางออก ${others}\nนั่งพิงกำแพงอยู่ตรงนั้น — ครบทุกคน`);
+    await line('ไม่มีใครพูดอะไรสักคำ ทุกคนเลือดอาบ ทุกคนแหงนมองเพดาน\nราวกับยังได้ยินเสียงจาก 50 ชั้นที่เพิ่งผ่านลงมา');
+    await line('ประตูทางออกเปิดสู่ป่าที่สว่างจ้าเหมือนแดดเที่ยงวัน\nพวกเขาจับมือกัน... แล้วก้าวออกไปพร้อมกันทั้งหกคน');
+    if (trueEnd) {
+      if (!skip) { fl.style.opacity = .6; await sleep(1200); fl.style.opacity = 0; }
+      await line('ผ้ายันต์ทั้ง ' + GHOSTS.length + ' ผืนในเป้ร้อนขึ้นพร้อมกัน\nผีทุกตนที่ถูกผนึกส่งเสียงกรีดร้องเป็นครั้งสุดท้าย แล้วเงียบไป');
+      await line('เสียงไซเรนดังมาแต่ไกล อากาศเย็นของเช้ามืดปะทะใบหน้า\nเป็นครั้งแรกในรอบ ' + loops + ' ลูป ที่ไม่มีบันไดให้เดินลงอีก');
+      await line('GRAND HOTEL พังทลายลงหลังพวกเขาเหมือนกระดาษเปียก\nลูปขาดลงแล้ว — นี่คือชั้นสุดท้ายจริง ๆ', 5200);
+    } else {
+      if (!skip) { Snd.sfx('whoosh'); fl.style.opacity = 1; await sleep(1700); }
+      bg.classList.remove('kb'); bg.src = src('bg_roof'); bg.style.filter = DAY; fl.style.opacity = 0;
+      await line('...แสงจ้าจนต้องหลับตา\nเมื่อลืมตาอีกครั้ง — ดาดฟ้าชั้น 51 · เที่ยงวันตรง');
+      await line('ทุกคนยืนอยู่ตรงนั้น ไม่มีแผล ไม่มีเลือด\nในเป้มีผ้ายันต์คนละ 4 ผืน เหมือนเมื่อตอนเริ่มต้นทุกอย่าง');
+      await line(`บนประตูดาดฟ้ามีรอยขีดด้วยเล็บ ${loops} เส้น\n${loops > 1 ? 'เพิ่มขึ้นทีละเส้น... ทุกครั้งที่พวกเขาออกไปได้' : 'รอยใหม่... ที่ไม่มีใครจำได้ว่าขีดเอาไว้'}`);
+      await line('เรนหัวเราะ "ผีมีจริงที่ไหนกัน!"\nมิระยกกล้องขึ้นถ่ายรูปหมู่ — และข้างหลังพวกเขามีคนที่เจ็ดยืนยิ้มอยู่');
+      await line(`ผีอีก ${GHOSTS.length - Archive.count()} ตนยังไม่ถูกผนึก\nGRAND HOTEL ไม่เคยมีชั้นสุดท้าย... มีแต่ลูปที่ไม่มีวันจบ`, 5200);
+    }
+    story.style.opacity = 0;
+    panel.innerHTML = `<h1 class="ink">${trueEnd ? 'THE END' : 'LOOP ' + loops}</h1><div style="color:#aaa;margin-bottom:14px;font-size:20px;letter-spacing:3px">${trueEnd ? 'ลูปขาดลงแล้ว · ทุกคนรอด' : 'ออกจากโรงแรมได้... แต่ลูปเริ่มต้นใหม่'}</div>
+      ${[['ตัวละครที่เลือก', c.name], ['ลูปที่', loops], ['ผีที่ผนึกได้ในรอบนี้', S.stats.sealed || 0], ['สารานุกรมผี', Archive.count() + ' / ' + GHOSTS.length], ['ตัดสินใจถูก / ผิด', S.stats.correct + ' / ' + S.stats.wrong], ['จำนวนครั้งที่เสียชีวิต', S.deathCount], ['เวลาที่ใช้', fmtTime(S.playTime)]].map(([a, b]) => `<div class="row"><span>${a}</span><b>${b}</b></div>`).join('')}
+      <div style="display:flex;gap:12px;margin-top:22px;flex-wrap:wrap"><button class="tbtn red" id="loopbtn">${trueEnd ? 'NEW GAME' : '↻ เริ่มลูปใหม่'}</button><button class="tbtn" onclick="Archive.open()">สารานุกรมผี</button><button class="tbtn" onclick="UI.toMenu()">MAIN MENU</button></div>`;
+    $('#ending').onclick = null;
+    $('#loopbtn').onclick = e => { e.stopPropagation(); Snd.sfx('confirm'); Game.newGame(this.slot, c.id); };
+    panel.classList.add('on');
+  },
+
+  /* ---------- talisman sealing ---------- */
+  setAim(on) {
+    this.aiming = !!on; this.pendingSeal = null;
+    const w = $('#world'); if (w) w.classList.toggle('aiming', this.aiming);
+    const b = $('#talbtn'); if (b) b.classList.toggle('on', this.aiming);
+  },
+  toggleAim() {
+    if (!this.S || this.busy || this.fl.roof) return;
+    if (this.S.talismans <= 0) { this.say(this.C.name, 'ผ้ายันต์หมดแล้ว... ต้องไปให้ถึงจุดพักก่อน', 'worried'); return; }
+    Snd.sfx('click'); this.setAim(!this.aiming);
+    if (this.aiming) this.say(this.C.name, 'แปะยันต์ที่ไหนดี... (คลิกสิ่งที่ผิดปกติ · กด T / Esc เพื่อยกเลิก)', null);
+  },
+  clickEntity(ent, elx) {
+    if (this.busy) return;
+    if (!this.aiming) return this.examine(ent);
+    this.pendingSeal = { ent, elx }; this.target = clamp(ent._x != null ? ent._x : this.px, 150, 1500);
+  },
+  elCenter(elx) {   // element centre in world coordinates
+    const l = parseFloat(elx.style.left) || elx.offsetLeft, t = parseFloat(elx.style.top) || elx.offsetTop;
+    const w = elx.offsetWidth, h = elx.offsetHeight;
+    const center = elx.classList.contains('plate');
+    return { x: center ? l : l + w / 2, y: t + h / 2 };
+  },
+  addSticker(x, y, burn, container) {
+    const s = el('img', 'sticker' + (burn ? ' burn' : '')); s.src = src('it_talisman');
+    s.style.left = (x - 22) + 'px'; s.style.top = (y - 52) + 'px'; s.style.transform = `rotate(${(Math.random() * 16 - 8).toFixed(1)}deg)`;
+    (container || $('#layer')).appendChild(s); return s;
+  },
+  async seal(ent, elx) {
+    const S = this.S, fl = this.fl; if (S.talismans <= 0) return;
+    this.busy = true; this.setAim(false); S.talismans--; this.updateItemBar();
+    const c = this.elCenter(elx);
+    Snd.sfx('stick');
+    if (ent.anom) {
+      const gid = ent.gid || fl.gid || this.randomGhost().id, g = GHOST(gid);
+      const isNew = !Archive.has(gid);
+      this.addSticker(c.x, c.y, false);
+      await sleep(250); Snd.sfx('seal'); this.flash(.7);
+      // the ghost is pulled out of the thing and bound into the cloth
+      const gi = el('img', 'sealghost'); gi.src = A['g_' + gid].src; gi.style.left = (c.x - 110) + 'px'; gi.style.top = (c.y - 300) + 'px';
+      $('#layer').appendChild(gi);
+      if (elx.classList.contains('obj') && ent.ghost) elx.style.opacity = 0;
+      await sleep(1500);
+      Archive.add(gid, fl.f, this.C.id);
+      S.stats.sealed = (S.stats.sealed || 0) + 1; S.stats.anomaliesFound++; S.stats.correct++; S.backStreak = 0;
+      S.heartRate = Math.max(0, S.heartRate - 10);
+      this.toast((isNew ? '★ NEW · ' : '') + 'ผนึกสำเร็จ!', `${g.name} ถูกสะกดไว้ในผ้ายันต์ · บันทึกลงสารานุกรมแล้ว`, false, 3000);
+      // the floor goes back to how it should be, with your talisman still on it
+      const clean = JSON.parse(fl.pre); clean.sealed = true; clean.stickers = (fl.stickers || []).concat([{ x: c.x, y: c.y }]);
+      clean.drops = (fl.drops || []).filter(d => !d.taken).map(d => ({ type: d.type, x: d.x }));
+      if (this.hunter) { this.hunter = null; }
+      this.fl = clean; this.render(clean, $('#layer'));
+      // the sealed ghost leaves its belonging behind — a tool you can use against the next one
+      const dt = pick(Math.random, ['talisman', 'talisman', 'talisman', 'talisman', 'incense', 'incense', 'bell', 'charm']);
+      const drop = { type: dt, x: clamp(c.x, 300, 1380) }; clean.drops.push(drop);
+      this.addDrop(drop, null, c.y - 60); Snd.sfx('pickup');
+      this.say(this.C.name, `ผนึก "${g.name}" ได้แล้ว!\nมันทิ้ง${ITEMS[dt].name}ไว้ — คลิกที่ของเพื่อเก็บไปใช้จับผีตัวต่อไป`, 'normal');
+      this.save('silent');
+    } else {
+      const st = this.addSticker(c.x, c.y, true);
+      Snd.sfx('burn'); this.addHR(8); fl.badSeal = true;
+      if (!fl.gid) fl.gid = this.randomGhost().id;
+      this.say(this.C.name, 'ยันต์ลุกไหม้เป็นเถ้า!! ...มีบางอย่างตื่นขึ้นแล้ว\nห้ามเดินหน้าต่อเด็ดขาด', 'shocked');
+      setTimeout(() => st.remove(), 1600);
+      Snd.sfx('whisper');
+    }
+    this.busy = false;
+  },
+
+  /* ---------- items ---------- */
+  addDrop(d, container, fromY) {
+    const it = ITEMS[d.type], im = el('img', 'pickup'); im.src = src(it.sprite); im.title = it.name + ' — คลิกเพื่อเก็บ';
+    im.style.left = (d.x - 40) + 'px'; im.style.top = (FLOOR_Y - 128) + 'px'; d._el = im;
+    if (fromY != null) { im.style.setProperty('--fy', (fromY - (FLOOR_Y - 128)) + 'px'); im.classList.add('dropping'); }
+    im.onclick = e => { e.stopPropagation(); if (this.busy) return; this.setAim(false); this.pendingSeal = null; this.pendingPick = d; this.target = d.x; this.say(this.C.name, 'นั่น' + it.name + '... ไปเก็บก่อน', null); };
+    const lb = el('div', 'picklabel', '▼ ' + it.name); lb.style.left = d.x + 'px'; lb.style.top = (FLOOR_Y - 160) + 'px'; d._lb = lb;
+    lb.onclick = im.onclick;
+    (container || $('#layer')).appendChild(im); (container || $('#layer')).appendChild(lb); return im;
+  },
+  pickUp(it) {
+    const S = this.S; it.taken = true; if (it._el) it._el.remove(); if (it._lb) it._lb.remove();
+    Snd.sfx('pickup');
+    if (it.type === 'talisman') S.talismans = Math.min(8, S.talismans + 1);
+    if (it.type === 'incense') S.items.incense = Math.min(3, (S.items.incense || 0) + 1);
+    if (it.type === 'charm') S.items.charm = 1;
+    if (it.type === 'bell') S.items.bell = Math.min(2, S.items.bell + 1);
+    this.toast('ได้รับ ' + ITEMS[it.type].name, ITEMS[it.type].desc, false, 2000);
+    this.updateItemBar(); this.save('silent');
+  },
+  burnIncense() {
+    const S = this.S; if (!S || this.busy || !(S.items.incense > 0)) return;
+    S.items.incense--; S.heartRate = Math.max(0, S.heartRate - 20); Snd.sfx('breath'); this.updateItemBar();
+    this.say(this.C.name, 'จุดธูปหอม... กลิ่นควันอ่อน ๆ ทำให้ใจสงบลง (Heart Rate −20%)', 'normal'); this.save('silent');
+  },
+  ringBell() {
+    const S = this.S; if (!S || this.busy || this.fl.roof || S.items.bell <= 0) return;
+    S.items.bell--; this.updateItemBar();
+    if (this.fl.anomaly || this.hunter || this.fl.badSeal) {
+      Snd.sfx('bellbad'); this.flash(.3); this.addHR(6); this.setExpr('shocked', 2500);
+      this.say(this.C.name, 'กระดิ่งสั่นรุนแรงจนเชือกแทบขาด!!\nชั้นนี้มีบางอย่างผิดปกติแน่นอน', 'shocked');
+    } else { Snd.sfx('bellok'); this.say(this.C.name, 'กริ๊ง... เสียงกระดิ่งใสและสงบ\nชั้นนี้ดูเหมือนจะปลอดภัย', 'normal'); }
+  },
+  updateItemBar() {
+    const S = this.S; if (!S) return;
+    const t = $('#talicons'); t.innerHTML = '';
+    for (let i = 0; i < Math.max(4, S.talismans); i++) { const im = el('img'); im.src = src('it_talisman'); if (i >= S.talismans) im.className = 'used'; t.appendChild(im); }
+    $('#talcount').textContent = '×' + S.talismans;
+    $('#bellbox').style.display = S.items.bell > 0 ? 'flex' : 'none'; $('#bellcount').textContent = '×' + S.items.bell;
+    $('#charmbox').style.display = S.items.charm > 0 ? 'flex' : 'none';
+    $('#incbox').style.display = S.items.incense > 0 ? 'flex' : 'none'; $('#inccount').textContent = '×' + (S.items.incense || 0);
+    $('#itembar').style.display = this.fl && this.fl.roof ? 'none' : 'flex';
+  },
+
+  /* ---------- skills (GDD §7) ---------- */
+  tickCooldown() { if (this.S.skillCooldown > 0) this.S.skillCooldown--; },
+  useSkill() {
+    const S = this.S, c = this.C; if (c.type !== 'active' || this.busy) return;
+    if (S.skillCooldown > 0) { this.say(c.name, `ยังใช้ ${c.skill} ไม่ได้ (อีก ${S.skillCooldown} ชั้น)`, null); return; }
+    if (this.fl.roof) { this.say(c.name, 'ยังไม่จำเป็นต้องใช้ตอนนี้', null); return; }
+    S.skillCooldown = 5; S.skillUsage++;
+    if (c.id === 'lin') {
+      Snd.sfx('breath'); S.heartRate = Math.max(0, S.heartRate - 15);
+      this.say('LIN', 'หายใจเข้า... สี่จังหวะ ค้างไว้... หายใจออก... (Heart Rate −15%)', 'normal');
+      this.toast('CALM BREATHING', 'Heart Rate −15%', false, 1800);
+    } else if (c.id === 'kirin') this.memoryRecord();
+    this.save('silent');
+  },
+  memoryRecord() {
+    const fake = this.genFloor(this.fl.f, { exact: true, normal: true }); fake.drops = [];
+    const box = el('div'); box.innerHTML = `<div style="font-size:18px;color:#bbb;margin-bottom:10px">ภาพอ้างอิง Base Layout ของ${ZONE_NAMES[this.fl.zone]} — ตำแหน่งของอาจสลับได้ แต่ "ตัวของ" ต้องเหมือนเดิม</div>`;
+    const mv = el('div'); mv.id = 'memview'; const mw = el('div', 'mw'); const bg = el('img', 'bg'); bg.src = src('bg_corridor'); bg.style.cssText = 'position:absolute;left:0;top:0;width:1672px;height:941px';
+    const ly = el('div'); mw.appendChild(bg); mw.appendChild(ly); mv.appendChild(mw); box.appendChild(mv);
+    this.render(fake, ly); ly.querySelectorAll('*').forEach(e => e.onclick = null);
+    Snd.sfx('shutter');
+    UI.modal('MEMORY RECORD · สมุดบันทึกของคิริน', box, [['ปิด', true, 'i_close']]);
+  },
+  miraHint() {
+    if (!this.fl.anomaly || this.busy) return;
+    Snd.sfx('shutter'); this.flash(.18);
+    this.say('MIRA', 'กล้องของฉันลั่นชัตเตอร์เอง... แสงสะท้อนในเลนส์ดูแปลก ๆ\nที่นี่ต้องมีอะไรบางอย่างไม่ปกติแน่', 'worried');
+  },
+
+  /* ---------- heart rate ---------- */
+  addHR(v) {
+    const S = this.S;
+    if (v > 0 && this.C.id === 'erin' && this.fl && this.fl.anomaly) v = Math.round(v * .8);
+    S.heartRate = clamp(S.heartRate + v, 0, 100);
+    if (v > 6) this.setExpr(v > 15 ? 'shocked' : 'worried', 1600);
+  },
+
+  /* ---------- HUD ---------- */
+  setupHUD() {
+    const bar = $('#hbar'); bar.innerHTML = ''; for (let i = 0; i < 12; i++) bar.appendChild(el('u'));
+    const c = this.C, sb = $('#skillbtn');
+    sb.className = c.type === 'active' ? '' : 'passive';
+    sb.onclick = () => this.useSkill();
+    this.hrShown = this.S.heartRate;
+    this.updateItemBar();
+  },
+  updateHUD(dt) {
+    const S = this.S, c = this.C;
+    this.hrShown += (S.heartRate - this.hrShown) * Math.min(1, dt * 4);
+    const hr = this.hrShown, lv = hrLevel(hr);
+    const n = Math.round(hr / 100 * 12);
+    $('#hbar').querySelectorAll('u').forEach((u, i) => u.classList.toggle('f', i < n));
+    $('#hbar').classList.toggle('hhot', hr > 60);
+    $('#hlevel').textContent = lv.name.toUpperCase() + ' · ' + Math.round(hr) + '%';
+    $('#hlevel').style.color = hr > 60 ? '#ff4545' : '#ddd';
+    const hs = 'hr' + lv.idx; const hh = $('#hheart'); if (!hh.src.endsWith(hs + '.webp')) hh.src = src(hs);
+    this.ecgPhase += dt * (60 + hr * 1.2) / 60;
+    let pts = ''; for (let x = 0; x <= 300; x += 4) { const ph = ((x / 300) * 3 + this.ecgPhase) % 1; let y = 25; if (ph > .42 && ph < .46) y = 25 - 22; else if (ph > .46 && ph < .5) y = 25 + 14; else if (ph > .55 && ph < .62) y = 25 - 5; pts += x + ',' + y + ' '; }
+    $('#ecgline').setAttribute('points', pts); $('#ecgline').setAttribute('stroke', hr > 60 ? '#ff4040' : '#eee');
+    let ex = hr <= 20 ? 'normal' : hr <= 60 ? 'worried' : 'shocked';
+    if (this.exprOverride && performance.now() < this.exprUntil) ex = this.exprOverride;
+    const pi = $('#hpimg'), want = src(c.id + '_' + ex); if (!pi.src.endsWith(want)) pi.src = want;
+    $('#hportrait').classList.toggle('critical', hr > 80 && SET.hrfx);
+    const sb = $('#skillbtn'), cd = S.skillCooldown;
+    if (c.type === 'active') { sb.innerHTML = `${c.skill} <small>${cd > 0 ? '· อีก ' + cd + ' ชั้น' : '· [Q] พร้อมใช้'}</small>`; sb.classList.toggle('cool', cd > 0); }
+    else if (c.id === 'ren') sb.innerHTML = `${c.skill} <small>${cd > 0 ? '· ชาร์จอีก ' + cd + ' ชั้น' : '· พร้อม (ติดตัว)'}</small>`;
+    else sb.innerHTML = `${c.skill} <small>· ติดตัว</small>`;
+    const vfx = SET.hrfx;
+    $('#vignette').style.opacity = vfx ? clamp((hr - 10) / 90, 0, 1) * .95 : 0;
+    $('#redpulse').style.opacity = vfx && (hr > 80 || this.hunter) ? (.35 + .35 * Math.sin(performance.now() / 180)) : 0;
+    const sh = $('#shake'); sh.classList.remove('shk1', 'shk2', 'shk3');
+    if (vfx && SET.shake) { if (hr > 80) sh.classList.add('shk3'); else if (hr > 60) sh.classList.add('shk2'); else if (hr > 40) sh.classList.add('shk1'); }
+    $('#world').style.filter = vfx && hr > 60 ? `contrast(${1 + (hr - 60) / 200}) blur(${hr > 80 ? .6 + .5 * Math.sin(performance.now() / 300) : 0}px)` : '';
+    $('#grain').style.opacity = SET.vfx ? .05 + hr / 900 : 0;
+  },
+  setExpr(e, ms) { this.exprOverride = e; this.exprUntil = performance.now() + ms; },
+  say(speaker, text, expr, long) {
+    $('#hspeaker').textContent = speaker || '';
+    clearInterval(this.typeT); const box = $('#hmsg'); box.textContent = ''; this.fullMsg = text;
+    if (expr) this.setExpr(expr, long ? 9000 : 3500);
+    const per = { slow: 1, normal: 2, fast: 4, instant: 9999 }[SET.textSpeed];
+    let k = 0; this.typeT = setInterval(() => { k += per; box.textContent = text.slice(0, k); if (k >= text.length) clearInterval(this.typeT); }, 28);
+  },
+  toast(t, sub, red, ms = 2000) {
+    const e = $('#toast'); e.innerHTML = t + (sub ? `<small>${sub}</small>` : ''); e.classList.toggle('red', !!red); e.style.opacity = 1;
+    clearTimeout(this.toastT); this.toastT = setTimeout(() => e.style.opacity = 0, ms);
+  },
+  flash(v) { const f = $('#flash'); f.style.transition = 'none'; f.style.opacity = v; requestAnimationFrame(() => { f.style.transition = 'opacity .6s'; f.style.opacity = 0; }); },
+  fade(v) { const d = $('#fxdark'); d.style.transition = 'opacity .45s'; d.style.opacity = v; return sleep(480); },
+
+  examine(o) {
+    if (this.busy) return; Snd.sfx('click');
+    const n = o.name || 'อะไรบางอย่าง';
+    if (o.ghost) { this.setExpr('shocked', 2000); this.say(this.C.name, 'อย่ามองมัน... อย่ามองมัน!!\n(กด T แล้วคลิกเพื่อแปะยันต์)', 'shocked'); this.addHR(3); return; }
+    this.say(this.C.name, `${pick(Math.random, ['ดูเหมือน', 'นี่คือ', 'มี'])}${n}... ` + pick(Math.random, ['ปกติดีหรือเปล่านะ', 'จำไว้ก่อน', 'ไม่แน่ใจว่าเดิมเป็นแบบนี้', 'ฝุ่นเกาะหนามาก', 'เย็นเฉียบเมื่อแตะ', 'เหมือนมันเพิ่งขยับ... หรือคิดไปเอง']), null);
+  },
+
+  /* ---------- main loop ---------- */
+  loop(t) {
+    if (!this.running) return;
+    const dt = Math.min(.05, (t - this.last) / 1000); this.last = t;
+    if (UI.cur === 'game' && !UI.modalOpen()) {
+      this.S.playTime += dt;
+      this.updatePlayer(dt);
+      this.updateBehaviors(dt);
+      if (SET.hrfx && this.S.heartRate > 15) {
+        this.beatT -= dt;
+        if (this.beatT <= 0) { this.beatT = 60 / (55 + this.S.heartRate * 1.1); if (this.S.heartRate > 30) Snd.sfx('beat'); const hh = $('#hheart'); hh.classList.remove('beat'); void hh.offsetWidth; hh.classList.add('beat'); }
+      }
+    }
+    this.updateHUD(dt);
+    requestAnimationFrame(tt => this.loop(tt));
+  },
+  updatePlayer(dt) {
+    const roof = this.fl.roof; const minX = roof ? 380 : 120, maxX = roof ? 1450 : 1550;
+    let mv = 0;
+    if (!this.busy) {
+      if (this.keys.left) mv = -1; else if (this.keys.right) mv = 1;
+      else if (this.target != null) {
+        const d = this.target - this.px, reach = this.pendingSeal ? 170 : this.pendingPick ? 40 : 6;
+        if (Math.abs(d) < reach) {
+          this.target = null;
+          if (this.pendingSeal) { const p = this.pendingSeal; this.pendingSeal = null; this.seal(p.ent, p.elx); }
+          else if (this.pendingPick) { const it = this.pendingPick; this.pendingPick = null; if (!it.taken) this.pickUp(it); }
+        }
+        else mv = Math.sign(d);
+      }
+    }
+    const speed = 340 * (this.S.heartRate > 80 ? 1.15 : 1) * (this.hunter ? 1.1 : 1);
+    if (mv) { this.px = clamp(this.px + mv * speed * dt, minX, maxX); this.facing = mv; this.walkT += dt; this.stepT -= dt; if (this.stepT <= 0) { this.stepT = .34; Snd.sfx('step'); } }
+    else this.walkT = 0;
+    const p = $('#player'); const want = src(this.C.id + '_full'); if (!p.src.endsWith(want)) p.src = want;
+    const H = roof ? 300 : 255, ar = A[this.C.id + '_full'].ar, W = H * ar;
+    const feet = roof ? 790 : 780;
+    const bob = mv ? Math.abs(Math.sin(this.walkT * 9)) * 6 : 0;
+    // sprites look in different directions: flip so the face always points where we walk, and turn around smoothly
+    const faceTo = this.facing * (BASE_FACING[this.C.id] || 1);
+    if (this.turnX == null) this.turnX = faceTo;
+    this.turnX += clamp(faceTo - this.turnX, -dt * 9, dt * 9);
+    const sx = Math.abs(this.turnX) < .12 ? .12 * Math.sign(this.turnX || faceTo) : this.turnX;
+    const lean = mv ? this.facing * 3 : 0;
+    p.style.cssText = `left:${this.px - W / 2}px;top:${feet - H - bob}px;height:${H}px;width:${W}px;z-index:10;transform-origin:50% 100%;transform:rotate(${lean + (mv ? Math.sin(this.walkT * 9) * 1.5 : 0)}deg) scaleX(${sx})`;
+    $('#pshadow').style.cssText = `left:${this.px - W * .6}px;top:${feet - 14}px;width:${W * 1.2}px;z-index:9`;
+    this.updatePrompts();
+  },
+  updatePrompts() {
+    const roof = this.fl.roof; const layer = $('#layer');
+    let want = null;
+    if (roof) { if (this.px < 560) want = 'roofdoor'; }
+    else if (this.px < 260) want = 'back'; else if (this.px > 1410) want = 'down';
+    if (this.busy) want = null;
+    if (want !== this.promptState) {
+      this.promptState = want; layer.querySelectorAll('.prompt').forEach(e => e.remove());
+      if (want) {
+        const im = el('img', 'prompt btnimg');
+        im.src = src(want === 'back' ? 'b_goback' : 'b_godown');
+        im.style.left = (want === 'back' ? 30 : want === 'down' ? 1420 : 300) + 'px'; im.style.top = (want === 'roofdoor' ? 250 : 300) + 'px';
+        im.onclick = e => { e.stopPropagation(); this.decide(want); };
+        layer.appendChild(im);
+      }
+    }
+  },
+  spawnHunter() {
+    const fl = this.fl, g = this.randomGhost();
+    const far = DOORX.filter(x => Math.abs(x - this.px) > 380); const x = far.length ? pick(Math.random, far) : (this.px < 836 ? 1300 : 380);
+    const im = el('img', 'obj ghostfx hunter'); im.src = A['g_' + g.id].src; im.style.zIndex = 9;
+    const h = 250, w = h * A['g_' + g.id].ar; im.style.height = h + 'px'; im.style.width = w + 'px'; im.style.top = (590 - h / 2) + 'px';
+    const ent = { name: '???', anom: 1, ghost: 1, gid: g.id, _x: x };
+    im.onclick = e => { e.stopPropagation(); this.clickEntity(ent, im); };
+    $('#layer').appendChild(im);
+    this.hunter = { x, el: im, w, ent, speed: 105 + fl.zone * 16 };
+    fl.gid = g.id;
+    const d = fl.doors.reduce((a, b) => Math.abs(b.x - x) < Math.abs(a.x - x) ? b : a);
+    if (d._el) { d._el.src = A['h_door_open'].src; }
+    Snd.sfx('door'); Snd.sfx('scare'); this.flash(.25);
+    this.setExpr('scream', 2500);
+    this.say(this.C.name, 'มีบางอย่างออกมาจากห้อง!!\nวิ่ง!! — ไปบันไดไหนก็ได้ หรือแปะยันต์ใส่มัน!', 'scream');
+    this.toast('มันออกมาแล้ว!', 'หนีไปที่บันได หรือแปะยันต์ผนึกมัน', true, 2600);
+  },
+  updateBehaviors(dt) {
+    const fl = this.fl; if (!fl || fl.roof || this.busy) return;
+    // hunter: an ordinary-looking floor that turns on you
+    if (fl.hunt && !fl.hunt.done) { fl.hunt.t -= dt; if (fl.hunt.t <= 0) { fl.hunt.done = true; this.spawnHunter(); } }
+    const H = this.hunter;
+    if (H) {
+      H.x += Math.sign(this.px - H.x) * H.speed * dt; H.ent._x = H.x;
+      H.el.style.left = (H.x - H.w / 2) + 'px';
+      if (Math.abs(H.x - this.px) < 70) { this.hunter = null; this.busy = true; if (this.tryLastChance()) return; this.killBy(H.ent.gid, 'มันวิ่งเข้ามาเร็วเกินกว่าที่ขาคุณจะหนีทัน'); return; }
+    }
+    for (const o of fl.objs) {
+      if (o.beh === 'stalk' && o._el) {
+        o._x += Math.sign(this.px - o._x) * o.speed * dt; o._el.style.left = (o._x - o._w / 2) + 'px';
+        if (Math.abs(o._x - this.px) < 75) { this.busy = true; if (this.tryLastChance()) return; this.killBy(o.gid, fl.anomaly ? fl.anomaly.death : 'มันมาถึงตัวคุณแล้ว'); return; }
+      }
+      if (o.beh === 'sneak' && o._el) {
+        const behind = Math.sign(o._x - this.px) !== this.facing && Math.abs(o._x - this.px) > 120;
+        o._t = (o._t || 0) + (behind ? dt : 0);
+        if (o._t > 1.3 && (o._moves || 0) < 5) {
+          o._t = 0; o._moves = (o._moves || 0) + 1;
+          o._x = clamp(o._x + (Math.random() < .5 ? -1 : 1) * (50 + Math.random() * 40), 330, 1340); o._el.style.left = (o._x - o._w / 2) + 'px';
+          if (SET.anomfx) Snd.sfx('creak'); this.addHR(2);
+        }
+      }
+      if (o.beh === 'turn' && o._el) {
+        const behind = Math.sign(o._x - this.px) !== this.facing && Math.abs(o._x - this.px) > 80;
+        const s = behind ? A[o.alt].src : A[o.sprite].src; if (!o._el.src.endsWith(s.slice(2))) { o._el.src = s; if (behind && SET.anomfx) Snd.sfx('whisper'); }
+      }
+    }
+    for (const d of fl.doors) {
+      if (d.beh === 'breath' && d._el) {
+        d._t = (d._t || 0) - dt;
+        if (d._t <= 0) { d._open = !d._open; d._t = 1.6 + Math.random() * 2.5; d._el.src = A[d._open ? 'h_door_open' : 'f_door'].src; if (SET.anomfx) Snd.sfx('door'); if (d._open) this.addHR(1); }
+      }
+    }
+    if (fl.flicker && SET.anomfx) {
+      this.flickT -= dt;
+      if (this.flickT <= 0) { this.flickT = .08 + Math.random() * (Math.random() < .3 ? 1.6 : .25); $('#wbg').style.filter = Math.random() < .45 ? `brightness(${.15 + Math.random() * .3})` : ''; }
+    }
+    // fake-outs: sounds and nervous thoughts that mean nothing
+    fl.decoyT -= dt;
+    if (fl.decoyT <= 0) {
+      fl.decoyT = 7 + Math.random() * 12 - fl.zone;
+      if (Math.random() < .35 + fl.zone * .08) {
+        Snd.event(pick(Math.random, ['knock', 'steps', 'whisper', 'creak', 'laugh']));
+        if (Math.random() < .5) this.say(this.C.name, pick(Math.random, DECOY_LINES), Math.random() < .5 ? 'worried' : null);
+        if (Math.random() < .25 && SET.vfx) this.flash(.08);
+      }
+    }
+  }
+};
+/* =========================================================
+   GHOST ARCHIVE (สารานุกรมผี) — shared by every save, so each run fills it further
+   ========================================================= */
+const Archive = {
+  data() { return Store.get('tlf_archive') || {}; },
+  has(id) { return !!this.data()[id]; },
+  count() { return Object.keys(this.data()).length; },
+  add(id, floor, by) { const d = this.data(); if (d[id]) d[id].n++; else d[id] = { n: 1, floor, by, at: Date.now() }; Store.set('tlf_archive', d); },
+  sel: null,
+  open() { Snd.sfx('click'); this.render(); UI.show('archive'); },
+  render() {
+    const d = this.data(), g = $('#agrid'); g.innerHTML = '';
+    $('#acount').textContent = `ผนึกแล้ว ${this.count()} / ${GHOSTS.length}`;
+    GHOSTS.forEach(gh => {
+      const c = el('div', 'acell' + (d[gh.id] ? '' : ' locked') + (this.sel === gh.id ? ' sel' : ''));
+      c.innerHTML = `<img src="${A['g_' + gh.id] ? A['g_' + gh.id].src : ''}"><span>${String(gh.no).padStart(3, '0')}</span>`;
+      c.onclick = () => { Snd.sfx('click'); this.sel = gh.id; this.render(); };
+      g.appendChild(c);
+    });
+    const gh = GHOST(this.sel || GHOSTS[0].id), got = d[gh.id], P = $('#adetail');
+    P.innerHTML = `<div class="abig ${got ? '' : 'locked'}"><img src="${A['g_' + gh.id] ? A['g_' + gh.id].src : ''}"></div>
+      <div class="ano">No. ${String(gh.no).padStart(3, '0')} · ${TIER_NAME[gh.tier]}</div>
+      <div class="aname">${got ? gh.name : '? ? ?'}</div>
+      <div class="atier">ระดับอันตราย ${'★'.repeat(gh.tier)}${'☆'.repeat(5 - gh.tier)}</div>
+      <div class="adesc">${got ? gh.desc : 'ยังไม่เคยถูกผนึก... มีเพียงเงาลาง ๆ ที่หลงเหลืออยู่ในบันทึกของโรงแรม'}</div>
+      <div class="ameta">พบได้ใน: ${TIER_ZONE[gh.tier]} และลึกกว่านั้น${got ? `<br>ผนึกครั้งแรกที่ชั้น ${got.floor} โดย ${CH(got.by) ? CH(got.by).name : '-'} · ผนึกแล้ว ${got.n} ครั้ง` : ''}</div>`;
+  }
+};
+function hrLevel(h) {
+  if (h <= 20) return { idx: 0, name: 'Calm', key: 'calm' };
+  if (h <= 40) return { idx: 1, name: 'Nervous', key: 'nervous' };
+  if (h <= 60) return { idx: 2, name: 'Afraid', key: 'afraid' };
+  if (h <= 80) return { idx: 3, name: 'Panic', key: 'panic' };
+  return { idx: 4, name: 'Critical', key: 'panic' };
+}
+
+/* =========================================================
+   OPTIONS  (GDD §15)
+   ========================================================= */
+const Options = {
+  tab: 'Graphics', fromGame: false,
+  open(fromGame = false) { this.fromGame = fromGame; this.tab = 'Graphics'; this.show(); },
+  show() {
+    const wrap = el('div');
+    const tabs = el('div', 'tabs');
+    ['Graphics', 'Audio', 'Gameplay', 'Controls', 'Save Management'].forEach(t => { const b = el('div', 'tab' + (t === this.tab ? ' on' : ''), t); b.onclick = () => { this.tab = t; this.show(); }; tabs.appendChild(b); });
+    wrap.appendChild(tabs);
+    const body = el('div'); wrap.appendChild(body);
+    const tog = (label, key, onch) => { const r = el('div', 'opt', `<span>${label}</span>`); const im = el('img', 'tg'); im.src = src(SET[key] ? 't_on' : 't_off'); im.onclick = () => { SET[key] = !SET[key]; im.src = src(SET[key] ? 't_on' : 't_off'); saveSettings(); Snd.sfx('click'); onch && onch(); }; r.appendChild(im); body.appendChild(r); };
+    const slider = (label, key) => { const r = el('div', 'opt', `<span>${label}</span>`); const i = el('input'); i.type = 'range'; i.min = 0; i.max = 1; i.step = .05; i.value = SET[key]; i.oninput = () => { SET[key] = +i.value; Snd.apply(); saveSettings(); }; r.appendChild(i); body.appendChild(r); };
+    const sel = (label, key, opts, onch) => { const r = el('div', 'opt', `<span>${label}</span>`); const s = el('select'); opts.forEach(([v, t]) => { const o = el('option', null, t); o.value = v; if (SET[key] === v) o.selected = true; s.appendChild(o); }); s.onchange = () => { SET[key] = s.value; saveSettings(); onch && onch(); }; r.appendChild(s); body.appendChild(r); };
+    if (this.tab === 'Graphics') {
+      sel('Resolution / การแสดงผล', 'display', [['fit', 'Fit to window (อัตโนมัติ)'], ['1280', '1280 × 720'], ['1672', '1672 × 941 (Native)'], ['960', '960 × 540']], fitStage);
+      const r = el('div', 'opt', '<span>Fullscreen</span>'); const b = el('button', 'tbtn', document.fullscreenElement ? 'ออกจากเต็มจอ' : 'เต็มจอ'); b.onclick = () => { toggleFull(); setTimeout(() => this.show(), 300); }; r.appendChild(b); body.appendChild(r);
+      body.appendChild(el('div', 'opt', '<span>VSync</span><span style="color:#888">Auto (ซิงก์กับเบราว์เซอร์)</span>'));
+      tog('Screen Shake (ภาพสั่น)', 'shake'); tog('Visual Effects (เกรนภาพ / แสง)', 'vfx');
+    } else if (this.tab === 'Audio') {
+      slider('Master Volume', 'master'); slider('Music Volume', 'music'); slider('Sound Effects', 'sfx'); slider('Ambient Sound', 'ambient');
+    } else if (this.tab === 'Gameplay') {
+      sel('Text Speed', 'textSpeed', [['slow', 'ช้า'], ['normal', 'ปกติ'], ['fast', 'เร็ว'], ['instant', 'ทันที']]);
+      tog('Heart Rate Effects (Panic Distortion)', 'hrfx'); tog('Anomaly Visual/Sound Effects', 'anomfx');
+      body.appendChild(el('div', 'opt', '<span>Difficulty</span><span style="color:#888">Normal · (จะเปิดในอนาคต)</span>'));
+    } else if (this.tab === 'Controls') {
+      body.appendChild(el('div', 'keys', '<div><b>← →</b><b>A D</b> Movement (เดิน)</div><div><b>คลิก</b> ที่พื้น = เดินไปตรงนั้น</div><div><b>E</b><b>↑</b><b>Enter</b> Interact / ใช้บันได</div><div><b>คลิก</b> สิ่งของ = ตรวจสอบ</div><div><b>Q</b> ใช้สกิล (Lin / Kirin)</div><div><b>T</b> แปะยันต์ แล้วคลิกสิ่งผิดปกติ</div><div><b>B</b> สั่นกระดิ่งเรียกวิญญาณ</div><div><b>Space</b> Confirm / ข้ามข้อความ</div><div><b>Esc</b> Back / หยุดเกม</div><div><b>F</b> Fullscreen</div>'));
+    } else {
+      Save.all().forEach((s, i) => {
+        const r = el('div', 'opt', `<span>Save Slot ${i + 1}: ${s ? CH(s.character).name + ' · ' + (s.completed ? 'จบเกมแล้ว' : s.currentFloor + 'F') + ' · CP ' + (s.lastCheckpoint || '—') + ' · ' + fmtTime(s.playTime) : '<i style="color:#777">ว่าง</i>'}</span>`);
+        if (s) { const b = el('button', 'tbtn', 'ลบเซฟ'); b.onclick = async () => { if (await UI.confirm('ลบข้อมูลเซฟ', `ลบ Save Slot ${i + 1} ใช่หรือไม่? ข้อมูลจะหายถาวร`)) { Save.remove(i); } Options.show(); }; r.appendChild(b); }
+        body.appendChild(r);
+      });
+      const r = el('div', 'opt', '<span>Reset Progress (ลบทุกช่องเซฟและการตั้งค่า)</span>'); const b = el('button', 'tbtn red', 'รีเซ็ตทั้งหมด');
+      b.onclick = async () => { if (await UI.confirm('รีเซ็ตความคืบหน้าทั้งหมด', 'ข้อมูลเซฟทั้ง 3 ช่องจะถูกลบ ใช่หรือไม่?')) { Store.del('tlf_saves'); SET = Object.assign({}, DEFAULT_SET); saveSettings(); Snd.apply(); } Options.show(); };
+      r.appendChild(b); body.appendChild(r);
+    }
+    UI.modal('OPTIONS', wrap, [['ปิด', true, 'i_close']]).then(() => { if (UI.cur === 'menu') Menu.refresh(); });
+  }
+};
+async function pauseMenu() {
+  if (UI.modalOpen() || Game.busy) return;
+  const v = await UI.modal('PAUSED', `<div style="text-align:center;color:#bbb">${Game.C.name} · ชั้น ${Game.fl.f} · เวลาเล่น ${fmtTime(Game.S.playTime)}<br>Checkpoint ล่าสุด: ${Game.S.lastCheckpoint ? Game.S.lastCheckpoint + 'F' : '—'}</div>`,
+    [['เล่นต่อ', 'resume'], ['บันทึก', 'save'], ['สารานุกรมผี', 'arc'], ['ตั้งค่า', 'opt'], ['เมนูหลัก', 'menu']]);
+  if (v === 'arc') Archive.open();
+  if (v === 'save') { Game.save('manual'); Game.toast('SAVED', 'บันทึกลง Save Slot ' + (Game.slot + 1), false, 1500); }
+  if (v === 'opt') Options.open(true);
+  if (v === 'menu') { if (await UI.confirm('กลับเมนูหลัก', 'ความคืบหน้าถึงชั้นปัจจุบันถูกบันทึกอัตโนมัติแล้ว<br>กลับเมนูหลักหรือไม่?')) { Game.save('silent'); UI.toMenu(); } }
+}
+
+/* =========================================================
+   INPUT
+   ========================================================= */
+addEventListener('keydown', e => {
+  Snd.init();
+  const k = e.key.toLowerCase();
+  if (k === 'f' && !UI.modalOpen()) { toggleFull(); return; }
+  if (UI.modalOpen()) { if (k === 'escape') { const c = $('#mbtns').lastElementChild; c && c.click(); } return; }
+  if (UI.cur === 'cut') { if (k === ' ' || k === 'enter') { e.preventDefault(); Cut.next(); } if (k === 'escape') Cut.skip(); return; }
+  if (UI.cur === 'game') {
+    if (k === 'arrowleft' || k === 'a') { Game.keys.left = true; Game.target = null; Game.pendingPick = null; }
+    if (k === 'arrowright' || k === 'd') { Game.keys.right = true; Game.target = null; Game.pendingPick = null; }
+    if ((k === 'e' || k === 'arrowup' || k === 'enter' || k === 'arrowdown') && Game.promptState) Game.decide(Game.promptState);
+    if (k === 'q') Game.useSkill();
+    if (k === 't') Game.toggleAim();
+    if (k === 'b') Game.ringBell();
+    if (k === 'g') Game.burnIncense();
+    if (k === 'escape') { if (Game.aiming) Game.setAim(false); else pauseMenu(); }
+    if (k === ' ') { e.preventDefault(); clearInterval(Game.typeT); $('#hmsg').textContent = Game.fullMsg || ''; }
+  } else if (k === 'escape' && UI.cur !== 'menu') UI.back();
+});
+addEventListener('keyup', e => { const k = e.key.toLowerCase(); if (k === 'arrowleft' || k === 'a') Game.keys.left = false; if (k === 'arrowright' || k === 'd') Game.keys.right = false; });
+addEventListener('pointerdown', () => Snd.init(), { once: false });
+function worldX(ev) { const r = $('#stage').getBoundingClientRect(); return (ev.clientX - r.left) / r.width * STAGE_W; }
+$('#world').addEventListener('click', ev => { if (UI.cur !== 'game' || Game.busy) return; if (Game.aiming) { Game.setAim(false); Game.say(Game.C.name, 'เก็บยันต์ไว้ก่อน...', null); return; } Game.pendingPick = null; Game.target = worldX(ev); });
+$('#world').addEventListener('contextmenu', ev => { ev.preventDefault(); Game.setAim(false); });
+$('#talbtn').onclick = () => Game.toggleAim();
+$('#bellbox').onclick = () => Game.ringBell();
+$('#incbox').onclick = () => Game.burnIncense();
+$('#hgear').onclick = () => { Snd.sfx('click'); pauseMenu(); };
+const pad = (id, key) => { const e = $(id); e.onpointerdown = ev => { ev.stopPropagation(); Game.keys[key] = true; Game.target = null; }; e.onpointerup = e.onpointerleave = () => Game.keys[key] = false; };
+pad('#padL', 'left'); pad('#padR', 'right');
+function toggleFull() { try { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); } catch (e) {} }
+
+/* =========================================================
+   STAGE SCALING + BOOT
+   ========================================================= */
+function fitStage() {
+  const vv = window.visualViewport; let s = Math.min((vv ? vv.width : innerWidth) / STAGE_W, (vv ? vv.height : innerHeight) / STAGE_H);
+  if (SET.display !== 'fit') s = Math.min(s, (+SET.display) / STAGE_W);
+  $('#stage').style.transform = `translate(-50%,-50%) scale(${s})`;
+  $('#mobilepad').style.display = matchMedia('(pointer:coarse)').matches ? 'flex' : 'none';
+}
+addEventListener('resize', fitStage); addEventListener('orientationchange', () => setTimeout(fitStage, 300)); if (window.visualViewport) visualViewport.addEventListener('resize', fitStage);
+document.addEventListener('gesturestart', e => e.preventDefault());
+// generative audio clock (runs on every screen)
+setInterval(() => {
+  let I = .25;
+  if (UI.cur === 'game' && Game.S && Game.fl) I = clamp(Game.S.heartRate / 100 * .75 + (Game.fl.roof ? 0 : zoneOf(Game.fl.f)) * .06, 0, 1);
+  if (UI.cur === 'death') I = .8;
+  Snd.tick(.1, I);
+}, 100);
+
+const ASSETS = ['bg_corridor', 'bg_roof', 'bg_menu', 'bg_end', 'hud_face', 'hud_text', 'hud_stat', 'b_godown', 'b_goback', 'b_confirm', 'b_cancel', 'i_back', 'i_close', 'i_ok', 'i_person', 'i_save', 'i_stairs', 't_on', 't_off', 'hr0', 'hr1', 'hr2', 'hr3', 'hr4',
+  ...CHARS.flatMap(c => ['full', 'sleep', 'normal', 'worried', 'shocked', 'scream', 'death'].map(t => c.id + '_' + t)),
+  ...new Set(OBJECTS.map(o => o.sprite)),
+  'f_door', 'f_paint_woman', 'h_teddy', 'h_bunny', 'h_doll', 'h_voodoo', 'h_handprint', 'h_splatter', 'h_mirror_face', 'h_window_hand', 'h_door_metal', 'h_door_hands', 'h_door_open',
+  'p_crackhole', 'p_crack1', 'p_crack2', 'p_ink', 'h_skulljar', 'h_cage', 'h_music_box', 'h_gramophone', 'h_spirit_house', 'h_candles', 'h_shadow_man', 'h_shadow_eyes', 'h_mirror_oval', 'h_mirror_shadow',
+  'j_zen', 'j_lin', 'j_kirin', 'j_erin', 'j_ren', 'j_mira', 'j_ghost', 'h_foot1', 'h_foot2', 'h_g_back', 'h_crawler', 'h_hands_hole', 'h_portal_ghost', 'h_g_bride', 'h_g_scream', 'h_g_wild', 'h_g_girl', 'h_g_girl3', 'h_g_nurse', 'h_g_blind', 'h_skull'];
+async function boot() {
+  fitStage();
+  const list = [...new Set(ASSETS)]; let done = 0;
+  await Promise.all(list.map(n => new Promise(res => {
+    const im = new Image(); im.onload = () => { A[n] = { src: src(n), ar: im.naturalWidth / im.naturalHeight }; done++; $('#loadbar i').style.width = (done / list.length * 100) + '%'; res(); };
+    im.onerror = () => { console.warn('missing', n); done++; res(); }; im.src = src(n);
+  })));
+  // slice the ghost atlas into one image per ghost
+  await new Promise(res => {
+    const at = new Image(); at.onload = async () => {
+      await Promise.all(GHOSTS.map(g => new Promise(r2 => {
+        const [x, y, w, h] = GHOST_RECTS[g.id]; const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(at, x, y, w, h, 0, 0, w, h);
+        cv.toBlob(b => { A['g_' + g.id] = { src: URL.createObjectURL(b), ar: w / h }; r2(); }, 'image/png');
+      })));
+      res();
+    };
+    at.onerror = res; at.src = src('ghost_atlas');
+  });
+  document.querySelectorAll('[data-src]').forEach(e => e.src = src(e.dataset.src));
+  Menu.init(); CharSel.init();
+  $('#loading').remove();
+  UI.show('menu'); Menu.refresh();
+}
+boot();
+</script>
+</body>
+</html>
